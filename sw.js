@@ -1,5 +1,5 @@
 // Jardilab : application installable, usage hors ligne limité
-const C = 'jardilab-v1';
+const C = 'jardilab-v2';
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(C).then(c => c.addAll(['/', '/index.html', '/icon-192.png'])).then(() => self.skipWaiting()));
 });
