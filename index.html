@@ -82,6 +82,12 @@ nav{justify-content:center;gap:12px}nav button{flex:0 1 200px}
 .gal.car::-webkit-scrollbar{display:none}.gal.car>.gc{scroll-snap-align:start}
 .galn{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:10px}.galn[hidden]{display:none}.galn button{min-width:48px;font-size:20px;padding:4px 14px}
 @media(min-width:1000px){.gal.car{grid-auto-columns:calc(33.333% - 6.67px)}}
+
+.tourbar{display:flex;justify-content:flex-end;margin:0 0 8px}.tourq{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;min-height:36px;font-size:13px}
+#trb{position:fixed;inset:0;z-index:300;touch-action:none}
+#trh{position:fixed;z-index:301;border:2px solid var(--g);border-radius:14px;box-shadow:0 0 0 100vmax rgba(0,0,0,.76);pointer-events:none;transition:top .25s,left .25s,width .25s,height .25s}
+#trt{position:fixed;z-index:302;background:#0f1612;border:1px solid var(--g);border-radius:14px;padding:14px;box-shadow:0 8px 30px #000a;width:min(380px,calc(100vw - 24px));font-size:14px;line-height:1.45}
+#trt p{margin:6px 0 12px}#trt .row{gap:8px;flex-wrap:nowrap}#trt .row button{flex:1;min-height:42px;padding:8px 10px}
 </style><link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
@@ -942,5 +948,56 @@ function teamModal(){const t=TEAM;if(!t)return;const chef=isChef(),act=t.members
 (function(){var n=0,q=0;function fix(){q=0;document.querySelectorAll('label:not([for])').forEach(function(l){if(l.querySelector('input,select,textarea'))return;var e=l.nextElementSibling;while(e&&e.tagName=='BR')e=e.nextElementSibling;if(!e||!/^(INPUT|SELECT|TEXTAREA)$/.test(e.tagName)||e.type=='hidden')return;if(!e.id)e.id='lf'+(++n);l.htmlFor=e.id})}
 function sched(){if(!q){q=1;requestAnimationFrame(fix)}}
 fix();try{new MutationObserver(sched).observe(document.body,{childList:true,subtree:true})}catch(e){}})();
+</script>
+<script>
+/* visites guidées par onglet */
+(function(){
+const TOURS={
+0:[{s:'#s0 .seg',t:"Choisissez d'abord : « Identifier » pour reconnaître une plante, « Diagnostiquer » pour repérer une maladie ou un ravageur."},
+ {s:'#s0 .drop .row',t:"Touchez « Caméra » pour photographier la plante, ou « Galerie » pour choisir une photo déjà prise. Cadrez une feuille ou une fleur, bien nette."},
+ {s:'#gabox>summary',t:"Les plantes partagées par d'autres jardiniers défilent ici. Ouvrez la section pour confirmer ou signaler une identification."},
+ {s:'#mapbox>summary',t:"La carte de la Suisse montre où les plantes ont été trouvées et signale les plantes envahissantes."},
+ {s:'#lb',t:"Créez un compte pour retrouver votre jardin partout, partager vos trouvailles et inviter une équipe.",c:()=>!USER}],
+1:[{s:'#s1>.card',t:"La météo de votre commune adapte les soins : l'arrosage est reporté s'il pleut, et des alertes signalent gel, chaleur ou vent. Touchez « Changer de lieu » pour choisir votre commune."},
+ {s:'#addbox>summary',t:"Touchez ici pour ajouter une plante ou un massif. Jardilab calcule seul son calendrier d'arrosage, d'engrais et de taille."},
+ {s:'#pn',o:'#addbox',t:"Indiquez le nom, le nombre et l'emplacement, puis touchez « Calculer son entretien ». « Plus d'options » permet d'ajouter une photo et une position sur la carte."},
+ {s:'#dt',up:'.card',t:"Les soins du jour sont ici. Touchez le bouton d'une tâche pour la cocher une fois faite."},
+ {s:'#cbox>summary',t:"Le calendrier montre tous les soins du mois. Vous pouvez l'imprimer en PDF ou l'exporter en CSV."},
+ {s:'#ibox>summary',t:"L'inventaire regroupe vos plantes : modifiez-les, téléchargez leur fiche en PDF ou supprimez-les."}],
+2:[{s:'#ty',up:'.row',t:"Choisissez le contenant (massif, bac, pot…) et sa forme."},
+ {s:'#rw',t:"Indiquez les dimensions en centimètres : le nombre de plantes en dépend."},
+ {s:'#st',up:'.row',t:"Choisissez le style et l'exposition : Jardilab propose des plantes adaptées à la lumière et à votre goût."},
+ {s:'#cadv>summary',t:"Facultatif : imposez vos propres plantes, choisissez couleurs, hauteurs et critères durables."},
+ {s:'#gb',t:"Touchez « Concevoir le plan » pour générer le plan, la vue de face, la palette de plantes et le contrôle de conformité."}]};
+let T=null;
+const seen=()=>{try{return JSON.parse(localStorage.getItem('vdtour')||'{}')}catch(e){return {}}};
+const mark=t=>{try{const s=seen();s[t]=1;localStorage.setItem('vdtour',JSON.stringify(s))}catch(e){}};
+const vis=e=>e&&e.getClientRects().length>0;
+function target(st){let e=document.querySelector(st.s);if(e&&st.up)e=e.closest(st.up);return e}
+function end(){if(!T)return;T.opened.forEach(d=>{d.open=false});['trb','trh','trt'].forEach(i=>{const e=document.getElementById(i);if(e)e.remove()});window.removeEventListener('resize',T.rs);document.removeEventListener('keydown',T.kd);T=null}
+function show(i,dir){if(!T)return;const n=T.steps.length;
+ while(i>=0&&i<n){const st=T.steps[i];if(st.c&&!st.c()){i+=dir;continue}if(st.o){const d=document.querySelector(st.o);if(d&&vis(d)&&!d.open){d.open=true;T.opened.push(d)}}const e=target(st);if(vis(e))break;i+=dir}
+ if(i>=n){end();return}if(i<0)i=0;
+ const st=T.steps[i],e=target(st);if(!vis(e)){end();return}T.i=i;
+ const big=e.getBoundingClientRect().height>innerHeight*.6;e.scrollIntoView({block:big?'start':'center',behavior:'instant'});if(big)scrollBy(0,-80);
+ const r=e.getBoundingClientRect(),hl=document.getElementById('trh'),bb=document.getElementById('trt'),pad=6;
+ hl.style.cssText='top:'+(r.top-pad)+'px;left:'+(r.left-pad)+'px;width:'+(r.width+pad*2)+'px;height:'+(r.height+pad*2)+'px';
+ const valid=T.steps.filter(s=>(!s.c||s.c())&&(s.o||vis(target(s)))),total=valid.length,idx=Math.max(1,valid.indexOf(st)+1),last=idx>=total;
+ bb.innerHTML='<div class="mut">'+idx+' / '+total+'</div><p>'+st.t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</p><div class="row">'+(last?'':'<button class="ghost" id="trs" type="button">Passer</button>')+(i>0?'<button class="ghost" id="trp" type="button">Retour</button>':'')+'<button id="trn" type="button">'+(last?'Terminé':'Suivant')+'</button></div>';
+ const s=document.getElementById('trs');if(s)s.onclick=end;const p=document.getElementById('trp');if(p)p.onclick=()=>show(T.i-1,-1);document.getElementById('trn').onclick=()=>last?end():show(T.i+1,1);
+ const bh=bb.offsetHeight,bw=bb.offsetWidth,nav=70,below=innerHeight-nav-(r.bottom+pad+10),above=r.top-pad-10;let top;
+ if(bh<=below)top=r.bottom+pad+10;else if(bh<=above)top=r.top-pad-10-bh;else top=innerHeight-nav-bh-8;
+ bb.style.top=Math.max(8,top)+'px';bb.style.left=Math.min(Math.max(12,r.left),innerWidth-bw-12)+'px';
+ document.getElementById('trn').focus({preventScroll:true})}
+function start(t){end();const steps=TOURS[t];if(!steps)return;mark(t);
+ const b=document.createElement('div');b.id='trb';const h=document.createElement('div');h.id='trh';const x=document.createElement('div');x.id='trt';x.setAttribute('role','dialog');x.setAttribute('aria-live','polite');
+ document.body.append(b,h,x);T={steps,i:0,opened:[],rs:()=>show(T.i,1),kd:e=>{if(e.key=='Escape')end()}};
+ window.addEventListener('resize',T.rs);document.addEventListener('keydown',T.kd);show(0,1)}
+window.tourStart=start;
+[0,1,2].forEach(t=>{const s=document.getElementById('s'+t);if(s)s.insertAdjacentHTML('afterbegin','<div class="tourbar"><button class="ghost tourq" data-tour="'+t+'" type="button">'+ICO('help')+' Visite guidée</button></div>')});
+document.querySelectorAll('[data-tour]').forEach(b=>b.onclick=()=>start(+b.dataset.tour));
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{const t=+b.dataset.t;if(!TOURS[t])return;try{if(!localStorage.getItem('vdo'))return}catch(e){return}
+ if(seen()[t]||T)return;setTimeout(()=>{if(T||seen()[t])return;if(!document.getElementById('mg').hidden||!document.getElementById('md').hidden)return;const on=document.getElementById('s'+t);if(on&&on.classList.contains('on'))start(t)},700)}));
+})();
 </script>
 </body></html>
