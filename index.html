@@ -187,6 +187,7 @@ async function ask(p,img,txt){const {data:{session}}=await SB.auth.getSession();
   const t=data.text||'';if(txt)return t;const c=t.replace(/```json|```/g,'').trim();
   try{return JSON.parse(c)}catch(e){try{return JSON.parse(c.slice(c.indexOf('{'),c.lastIndexOf('}')+1))}catch(e2){if(k==2)throw new Error("L'IA a renvoyé une réponse illisible, réessayez.")}}}}
 const LN={fr:"français",de:"allemand (Suisse, sans ß)",it:"italien"}[LANG],J=" Réponds uniquement avec du JSON valide, avec toutes les valeurs textuelles rédigées en "+LN+" (les clés JSON et les valeurs d'énumération indiquées restent inchangées), sans markdown. N'utilise JAMAIS de guillemets doubles à l'intérieur des textes (utilise des apostrophes ou des « »), et pas de virgule finale.";
+window.__tqFetch=async function(a){const {data:{session}}=await SB.auth.getSession();if(!session)throw 0;const r=await ask("Traduis en "+LN+" chaque texte de ce tableau JSON, dans le même ordre, sans rien ajouter. Réponds avec un objet de la forme {\"t\":[...]} contenant les traductions : "+JSON.stringify(a)+J);return r&&r.t};
 /* nav */
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x==b));document.querySelectorAll('.sec').forEach((s,i)=>s.classList.toggle('on',s.id=='s'+b.dataset.t));scrollTo(0,0)});
 document.querySelectorAll('[data-go]').forEach(c=>c.onclick=()=>document.querySelector('nav button[data-t="'+c.dataset.go+'"]').click());$('h1').onclick=()=>document.querySelector('nav button[data-t="9"]').click();

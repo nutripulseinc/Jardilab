@@ -37,12 +37,35 @@
     function tr2(s) { var r = T(s); return r; }
     window.__T = T;
     var seen = new WeakMap(), AT = ['placeholder', 'title', 'aria-label', 'alt'];
+    // texte français libre (conseils IA, descriptions) : traduit à la demande via window.__tqFetch, avec cache local
+    var FRW = /(?:^|[^a-zà-ÿ])(les|des|du|est|pour|avec|dans|une|aux|au|ou|où|qui|que|pas|sur|très|vos|votre|vous|cette|ses|leur|chaque|toutes|tous|sans|sont|peut|après|avant|entre|plus|être|mais|donc|aussi)(?=[^a-zà-ÿ]|$)/gi,
+        DC = {}, DK = 'vdtx_' + L, pend = {}, fail = {}, tim = 0;
+    try { DC = JSON.parse(localStorage.getItem(DK) || '{}'); } catch (e) {}
+    function isFr(s) { var m = s.match(FRW); if (!m) return false; var u = {}; m.forEach(function (x) { u[x.toLowerCase()] = 1; }); return Object.keys(u).length >= 2; }
+    function dyn(v) {
+      var core = norm(v); if (core.length < 40 || !isFr(core)) return v;
+      if (DC[core]) return v.slice(0, v.length - v.replace(/^\s+/, '').length) + DC[core] + v.slice(v.replace(/\s+$/, '').length);
+      if (!fail[core] && window.__tqFetch) { pend[core] = 1; if (!tim) tim = setTimeout(go, 1200); }
+      return v;
+    }
+    function go() {
+      tim = 0; var ks = Object.keys(pend).slice(0, 20); if (!ks.length) return;
+      ks.forEach(function (k) { delete pend[k]; });
+      window.__tqFetch(ks).then(function (a) {
+        if (!a || a.length !== ks.length) throw 0;
+        ks.forEach(function (k, i) { if (typeof a[i] === 'string' && a[i]) DC[k] = a[i]; else fail[k] = 1; });
+        try { localStorage.setItem(DK, JSON.stringify(DC)); } catch (e) {}
+        seen = new WeakMap(); node(document.body);
+      }).catch(function () { ks.forEach(function (k) { fail[k] = 1; }); });
+      if (Object.keys(pend).length) tim = setTimeout(go, 1500);
+    }
     function node(n) {
       if (n.nodeType === 3) {
         var p = n.parentNode;
         if (!p || /^(SCRIPT|STYLE|TEXTAREA|CODE|PRE)$/.test(p.nodeName) || (p.closest && p.closest('[data-nt]'))) return;
         var v = n.nodeValue; if (seen.get(n) === v) return;
         var r = T(v);
+        if (r === v) r = dyn(v);
         if (r !== v) {
           if (p.nodeName === 'OPTION' && !p.hasAttribute('value')) p.setAttribute('value', norm(v));
           n.nodeValue = r;
