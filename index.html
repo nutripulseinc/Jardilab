@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8">
+<html lang="fr"><head><meta charset="utf-8"><script src="/i18n.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Jardilab – Votre jardin intelligent</title>
 <link rel="preload" href="/outfit-400.woff" as="font" type="font/woff" crossorigin>
@@ -68,6 +68,8 @@ details.card summary{cursor:pointer;color:var(--g);font-weight:600}.dtn{display:
 .stk{position:sticky;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:4;padding:16px 0 6px;margin-top:6px;background:linear-gradient(to top,var(--card) 65%,transparent)}.stk .spin{display:block;text-align:center;margin-top:6px}
 footer{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 2px;padding:6px 12px 24px}footer a{margin:0;padding:10px 12px;min-height:40px;display:inline-flex;align-items:center;white-space:nowrap;text-decoration:underline;text-underline-offset:3px;border-radius:10px}footer a:active{background:var(--card)}footer>div{flex-basis:100%}
 input[type=checkbox]{width:20px!important;height:20px;margin:0;accent-color:var(--g);flex:none}label:has(>input[type=checkbox]){min-height:44px;align-items:center}.chip{min-height:40px;display:inline-flex;align-items:center;gap:6px}
+
+#lg{display:flex;justify-content:center;gap:2px}#lg a{text-decoration:none;opacity:.7}#lg a.on{opacity:1;color:var(--g);font-weight:700;text-decoration:underline}
 </style><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌱%3C/text%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
@@ -157,7 +159,7 @@ input[type=checkbox]{width:20px!important;height:20px;margin:0;accent-color:var(
  <div id="gr"></div>
 </section>
 </main>
-<footer><a data-lg="contact">Contact</a><a data-lg="legal">Mentions légales</a><a data-lg="priv">Confidentialité</a><a id="fh">Aide</a><a id="fi">Installer l'app</a><div style="margin-top:6px">Jardilab · conseils et identifications par IA, à titre indicatif</div></footer>
+<footer><a data-lg="contact">Contact</a><a data-lg="legal">Mentions légales</a><a data-lg="priv">Confidentialité</a><a id="fh">Aide</a><a id="fi">Installer l'app</a><div id="lg" data-nt><a data-l="fr" lang="fr">Français</a><a data-l="de" lang="de">Deutsch</a><a data-l="it" lang="it">Italiano</a></div><div style="margin-top:6px">Jardilab · conseils et identifications par IA, à titre indicatif</div></footer>
 <div id="md" hidden><div class="card" style="width:100%;max-width:420px;margin:auto"><div class="pl"><h2>👤 Mon compte</h2><button class="ghost" id="mx" style="padding:6px 12px">✕</button></div><div id="acc"><p class="mut">Chargement…</p></div></div></div>
 <div id="pz"></div>
 <div id="mg" hidden><div class="card" style="width:100%;max-width:520px;margin:auto"><div class="pl"><h2 id="mgt" style="margin:0"></h2><button class="ghost" id="mgx" style="padding:6px 12px;min-height:0">✕</button></div><div id="mgc"></div></div></div>
@@ -173,7 +175,7 @@ let DIAG=false,SNAP=null,TT=null,CLID=null,GAL=[];
 
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const today=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);
-const dd=d=>new Date(d*864e5),fmt=d=>dd(d).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
+const dd=d=>new Date(d*864e5),fmt=d=>dd(d).toLocaleDateString(LOC,{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
 let massifs=[];try{massifs=JSON.parse(localStorage.getItem('vdm')||'[]')}catch(e){}
 let W=null,gdone={};try{gdone=JSON.parse(localStorage.getItem('vdg')||'{}')}catch(e){}
 let plants=[];try{plants=JSON.parse(localStorage.getItem('vd')||'[]')}catch(e){}
@@ -184,7 +186,7 @@ async function ask(p,img,txt){const {data:{session}}=await SB.auth.getSession();
   if(error||!data){if(k==2)throw new Error('Service IA indisponible, réessayez.');continue}
   const t=data.text||'';if(txt)return t;const c=t.replace(/```json|```/g,'').trim();
   try{return JSON.parse(c)}catch(e){try{return JSON.parse(c.slice(c.indexOf('{'),c.lastIndexOf('}')+1))}catch(e2){if(k==2)throw new Error("L'IA a renvoyé une réponse illisible, réessayez.")}}}}
-const J=" Réponds uniquement avec du JSON valide, en français, sans markdown. N'utilise JAMAIS de guillemets doubles à l'intérieur des textes (utilise des apostrophes ou des « »), et pas de virgule finale.";
+const LN={fr:"français",de:"allemand (Suisse, sans ß)",it:"italien"}[LANG],J=" Réponds uniquement avec du JSON valide, avec toutes les valeurs textuelles rédigées en "+LN+" (les clés JSON et les valeurs d'énumération indiquées restent inchangées), sans markdown. N'utilise JAMAIS de guillemets doubles à l'intérieur des textes (utilise des apostrophes ou des « »), et pas de virgule finale.";
 /* nav */
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x==b));document.querySelectorAll('.sec').forEach((s,i)=>s.classList.toggle('on',s.id=='s'+b.dataset.t));scrollTo(0,0)});
 document.querySelectorAll('[data-go]').forEach(c=>c.onclick=()=>document.querySelector('nav button[data-t="'+c.dataset.go+'"]').click());$('h1').onclick=()=>document.querySelector('nav button[data-t="9"]').click();
@@ -242,7 +244,7 @@ function evs(from,to,all){let o=[];const F=p=>!$('#sf').value||p.sec==$('#sf').v
  o.forEach(e=>{const m=wetSkip(e,e.d)||(e.raw!=null&&e.raw!=e.d?wetSkip(e,e.raw):null);if(m)e.sk=m});
  o.sort((a,b)=>a.d-b.d||(b.k=='g')-(a.k=='g'));return all?o:o.filter(e=>!isDone(e)&&!e.sk)}
 function render(){try{gRender()}catch(e){}try{renderBk()}catch(e){}try{$('#gcnt').textContent=plants.filter(p=>p.pos).length?plants.filter(p=>p.pos).length+' placé(s)':''}catch(e){}const y=cm.getFullYear(),m=cm.getMonth(),f=Math.floor(Date.UTC(y,m,1)/864e5),n=new Date(y,m+1,0).getDate(),off=(new Date(y,m,1).getDay()+6)%7;
- $('#mt').textContent=cm.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+ $('#mt').textContent=cm.toLocaleDateString(LOC,{month:'long',year:'numeric'});
  const ev=evs(f,f+n-1),has=new Set(ev.map(e=>e.d));let h='LMMJVSD'.split('').map(x=>'<div class="h">'+x+'</div>').join('')+'<div></div>'.repeat(off);
  for(let i=0;i<n;i++){const d=f+i;h+=`<div data-d="${d}" class="${d==today()?'t ':''}${d==sel?'s':''}">${i+1}${has.has(d)?'<i></i>':''}</div>`}
  $('#cal').innerHTML=h;document.querySelectorAll('.cal [data-d]').forEach(c=>c.onclick=()=>{sel=+c.dataset.d;JD=[];render();const t=$('#dt2');if(t)t.scrollIntoView({block:'nearest',behavior:'smooth'})});
@@ -321,7 +323,7 @@ async function loadGal(){loadMap();const g=$('#gal'),{data,error}=await SB.from(
  const cnt=id=>{const v=vt.filter(x=>x.discovery_id==id),m=USER?v.find(x=>x.user_id==USER.id):null;return {y:v.filter(x=>x.ok).length,n:v.filter(x=>!x.ok).length,me:m?m.ok:undefined}};
  const vb='padding:4px 10px;min-height:36px;font-size:12px;margin:2px 4px 2px 0';
  g.innerHTML=data.map(d=>{const img=SB.storage.from('discoveries').getPublicUrl(d.image_path).data.publicUrl,c=cnt(d.id),own=USER&&d.user_id==USER.id;
-  return `<div class="gc"><img loading="lazy" alt="${esc(d.nom)}" src="${esc(img)}"><div><b>${esc(d.nom)}</b><div class="mut"><i>${esc(d.latin)}</i></div>${d.hidden?'<span class="tag tox">Masquée (signalée)</span>':''}${d.toxique?'<span class="tag tox">⚠ Toxique</span>':''}${invB(d.latin,d.nom)?'<span class="tag tox">Envahissante (CH)</span>':''}${d.lieu?'<div class="mut">'+ICO('pin')+' '+esc(d.lieu)+'</div>':''}<button class="ghost" data-open="${d.id}" style="padding:4px 10px;min-height:36px;font-size:12px;margin:4px 0">Voir la fiche ›</button><div class="mut">par @${esc((d.profiles&&d.profiles.pseudo)||'jardinier')} · ${new Date(d.created_at).toLocaleDateString('fr-FR')}</div>
+  return `<div class="gc"><img loading="lazy" alt="${esc(d.nom)}" src="${esc(img)}"><div><b>${esc(d.nom)}</b><div class="mut"><i>${esc(d.latin)}</i></div>${d.hidden?'<span class="tag tox">Masquée (signalée)</span>':''}${d.toxique?'<span class="tag tox">⚠ Toxique</span>':''}${invB(d.latin,d.nom)?'<span class="tag tox">Envahissante (CH)</span>':''}${d.lieu?'<div class="mut">'+ICO('pin')+' '+esc(d.lieu)+'</div>':''}<button class="ghost" data-open="${d.id}" style="padding:4px 10px;min-height:36px;font-size:12px;margin:4px 0">Voir la fiche ›</button><div class="mut">par @${esc((d.profiles&&d.profiles.pseudo)||'jardinier')} · ${new Date(d.created_at).toLocaleDateString(LOC)}</div>
   <div class="mut" style="margin-top:6px">Identification correcte ?</div>${own?'<span class="tag ok">✓ '+c.y+'</span><span class="tag">? '+c.n+'</span>':`<button class="ghost vt" data-v="1" data-id="${d.id}" style="${vb};${c.me===true?'background:var(--g);color:#04210e':''}">✓ ${c.y}</button><button class="ghost vt" data-v="0" data-id="${d.id}" style="${vb};${c.me===false?'background:var(--bad);color:#fff':''}">? ${c.n}</button><button class="ghost" data-rep="${d.id}" style="${vb}" aria-label="Signaler">${ICO('flag')}</button>`}
   ${own?`<button class="ghost" data-del="${d.id}" style="${vb}">Supprimer</button>`:''}</div></div>`}).join('');
  g.querySelectorAll('.gc').forEach(c=>c.onclick=e=>{if(e.target.closest('button,a,select,input'))return;const b=c.querySelector('[data-open]');if(b)showDisc(b.dataset.open)});g.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>showDisc(b.dataset.open));g.querySelectorAll('.vt').forEach(b=>b.onclick=async()=>{if(!USER||!PROF){openM();return}const ok=b.dataset.v=='1',id=b.dataset.id;
@@ -515,7 +517,7 @@ async function loadMap(){if(!MAP)return;
  PINS.clearLayers();
  data.forEach(d=>{const img=SB.storage.from('discoveries').getPublicUrl(d.image_path).data.publicUrl;
   const iv=!!inv(d.latin,d.nom);if($('#invonly')&&$('#invonly').checked&&!iv)return;
-  const mk=window.L.circleMarker([+d.lat,+d.lon],{radius:8,color:'#fff',weight:2,fillColor:iv?'#ef4444':'#22c55e',fillOpacity:.95}).addTo(PINS);mk.on('popupopen',ev=>{const b=ev.popup.getElement().querySelector('[data-fiche]');if(b)b.onclick=()=>showDisc(b.dataset.fiche)});mk.bindPopup(`<div style="width:150px"><img src="${esc(img)}" alt="" style="width:100%;border-radius:8px;margin-bottom:6px"><b>${esc(d.nom)}</b><br><i>${esc(d.latin)}</i>${iv?'<br><b style="color:#ef4444">Envahissante</b>':''}${d.lieu?'<br>📍 '+esc(d.lieu):''}<br><span style="opacity:.7">@${esc((d.profiles&&d.profiles.pseudo)||'jardinier')} · ${new Date(d.created_at).toLocaleDateString('fr-FR')}</span><br><button data-fiche="${d.id}" style="margin-top:6px;padding:4px 10px;min-height:32px;font-size:12px">Voir la fiche</button></div>`)});
+  const mk=window.L.circleMarker([+d.lat,+d.lon],{radius:8,color:'#fff',weight:2,fillColor:iv?'#ef4444':'#22c55e',fillOpacity:.95}).addTo(PINS);mk.on('popupopen',ev=>{const b=ev.popup.getElement().querySelector('[data-fiche]');if(b)b.onclick=()=>showDisc(b.dataset.fiche)});mk.bindPopup(`<div style="width:150px"><img src="${esc(img)}" alt="" style="width:100%;border-radius:8px;margin-bottom:6px"><b>${esc(d.nom)}</b><br><i>${esc(d.latin)}</i>${iv?'<br><b style="color:#ef4444">Envahissante</b>':''}${d.lieu?'<br>📍 '+esc(d.lieu):''}<br><span style="opacity:.7">@${esc((d.profiles&&d.profiles.pseudo)||'jardinier')} · ${new Date(d.created_at).toLocaleDateString(LOC)}</span><br><button data-fiche="${d.id}" style="margin-top:6px;padding:4px 10px;min-height:32px;font-size:12px">Voir la fiche</button></div>`)});
  $('#mapn').textContent=data.length?data.length+' découverte(s) localisée(s) · positions approximatives (≈ 1 km) ou précises selon le choix de l\'auteur':'Aucune découverte localisée pour l\'instant : soyez le premier !'}
 let EDITID=null;const pkMsg=t=>{const k=EDITID?$('#pedt'):$('#pk');if(k)k.textContent=t};
 function setPick(la,lo,fly){PICKING=EDITID?true:false;
@@ -590,7 +592,7 @@ function modeUI(root,cfg,lieuFn,onCh){const V=root._v||(root._v={k:'a',y:new Dat
     h.push('<div class="sub" style="margin:10px 0 4px">Jours habituels de la semaine</div><div style="display:flex;gap:6px;flex-wrap:wrap">'+DD.map(n=>'<label class="tag" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;min-width:36px;min-height:36px;padding:0 6px;margin:0;'+(c.days.includes(n)?'background:'+col+';color:#04210e':'')+'"><input type="checkbox" data-cd="'+n+'"'+(c.days.includes(n)?' checked':'')+' hidden>'+DL[DN.indexOf(n)]+'</label>').join('')+'</div>');
     h.push('<div class="sub" style="margin:12px 0 4px">Mois : touchez pour afficher les jours</div><div style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px">'+CMN.map((n,i)=>'<button type="button" data-mv="'+i+'" style="padding:8px 0;min-height:36px;font-size:13px;margin:0;border-radius:10px;border:1px solid '+(i==V.m?col:'var(--line)')+';background:'+(c.months.includes(i)?col+'33':'transparent')+';color:var(--g2)">'+n+'</button>').join('')+'</div>');
     const y=V.y,m=V.m,f=Math.floor(Date.UTC(y,m,1)/864e5),n=new Date(y,m+1,0).getDate(),off=(new Date(y,m,1).getDay()+6)%7,t0=today();
-    h.push('<div class="pl" style="margin-top:12px"><button type="button" class="ghost" data-st="-1">‹</button><b>'+new Date(y,m,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'})+'</b><button type="button" class="ghost" data-st="1">›</button></div><label style="display:flex;align-items:center;gap:8px;margin:8px 0"><input type="checkbox" data-cm style="width:auto;margin:0;min-height:0"'+(c.months.includes(m)?' checked':'')+'> Mois actif (jours habituels appliqués)</label>');
+    h.push('<div class="pl" style="margin-top:12px"><button type="button" class="ghost" data-st="-1">‹</button><b>'+new Date(y,m,1).toLocaleDateString(LOC,{month:'long',year:'numeric'})+'</b><button type="button" class="ghost" data-st="1">›</button></div><label style="display:flex;align-items:center;gap:8px;margin:8px 0"><input type="checkbox" data-cm style="width:auto;margin:0;min-height:0"'+(c.months.includes(m)?' checked':'')+'> Mois actif (jours habituels appliqués)</label>');
     let g=DL.map(x=>'<div style="color:var(--mut);font-size:12px">'+x+'</div>').join('')+'<div></div>'.repeat(off);
     for(let i=0;i<n;i++){const d=f+i,we=X&&[0,6].includes(dow(d)),on=!we&&ckOk(c,d);g+='<div '+(we?'':'data-cy="'+d+'" ')+'style="padding:9px 0;border-radius:10px;font-size:13px;'+(we?'opacity:.3;':'cursor:pointer;')+(on?'background:'+col+';color:#04210e;font-weight:600':'')+(d==t0?';outline:1px solid #fff':'')+'">'+(i+1)+'</div>'}
     h.push('<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center">'+g+'</div><p class="sub" style="margin:8px 0 0">Touchez un jour pour l\'ajouter ou le retirer. <a href="#" data-rs style="color:var(--g)">Réinitialiser</a></p>');
@@ -624,7 +626,7 @@ async function showDisc(id){let d=GAL.find(x=>x.id==id);
  ${bf.length?'<h3>Bienfaits</h3>'+bf.map(b=>'<span class="tag ok">'+esc(b)+'</span>').join(''):''}
  ${(dt.proprietes||[]).length?'<h3>Propriétés</h3>'+dt.proprietes.map(b=>'<span class="tag">'+esc(b)+'</span>').join(''):''}
  ${d.details?'':'<p class="mut" style="margin-top:10px">Fiche publiée avant l\'ajout des détails : seuls les éléments de base sont disponibles.</p>'}
- <h3>Où et qui</h3><div class="mut">${d.lieu?ICO('pin')+' '+esc(d.lieu)+'<br>':''}par @${esc((d.profiles&&d.profiles.pseudo)||'jardinier')} · ${new Date(d.created_at).toLocaleDateString('fr-FR')}</div>
+ <h3>Où et qui</h3><div class="mut">${d.lieu?ICO('pin')+' '+esc(d.lieu)+'<br>':''}par @${esc((d.profiles&&d.profiles.pseudo)||'jardinier')} · ${new Date(d.created_at).toLocaleDateString(LOC)}</div>
  <div class="row" style="margin-top:12px">${d.lat!=null?'<button class="ghost" id="dmap" type="button">📍 Voir sur la carte</button>':''}${own?'<button class="ghost" id="dpos" type="button">✏️ '+(d.lat!=null?'Modifier la position':'Placer sur la carte')+'</button>':''}</div>
  <p class="mut" style="font-size:12px">Identification par IA, indicative. Ne consommez aucune plante sur cette base.</p>`);
  $('#dpic').onclick=()=>{const z=document.createElement('div');z.id='zm';z.innerHTML='<img alt="" src="'+esc(img)+'">';z.onclick=()=>z.remove();document.body.appendChild(z)};
@@ -671,9 +673,17 @@ function dl(n,txt,type){const a=document.createElement('a');a.href=URL.createObj
 /* compte : synchronisation */
 let CS=null;
 function cloudSave(){if(!USER)return;clearTimeout(CS);CS=setTimeout(async()=>{try{await SB.from('user_data').upsert({user_id:USER.id,plants,massifs,updated_at:new Date().toISOString()})}catch(e){}},800)}
+/* réglages synchronisés entre appareils (commune, préférences d'entretien, langue) */
+const SK=['vdw','vdcfg','vdpro','vdcu','vdl'];let STm=null;
+const getSet=()=>{const o={};SK.forEach(k=>{try{const v=localStorage.getItem(k);if(v!=null)o[k]=v}catch(e){}});return o};
+function setSave(){if(!USER)return;clearTimeout(STm);STm=setTimeout(async()=>{try{await SB.from('user_data').update({settings:getSet()}).eq('user_id',USER.id)}catch(e){}},1200)}
+try{const _si=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){_si.call(this,k,v);if(this===localStorage&&SK.includes(k))setSave()}}catch(e){}
+async function setLoad(){if(!USER)return;try{const {data,error}=await SB.from('user_data').select('settings').eq('user_id',USER.id).maybeSingle();if(error)return;if(!data||!data.settings){setSave();return}const c=data.settings;let lw=false,ll=false;
+ SK.forEach(k=>{if(typeof c[k]!='string')return;let cur=null;try{cur=localStorage.getItem(k)}catch(e){}if(cur===c[k])return;if(k=='vdl'){if(cur!==null)return;ll=true}try{Storage.prototype.setItem.call(localStorage,k,c[k])}catch(e){}if(k=='vdw')lw=true});
+ if(ll&&c.vdl&&c.vdl!=LANG){setLang(c.vdl);return}if(lw)try{loadW(true)}catch(e){}}catch(e){}}
 async function cloudLoad(){if(!USER)return;try{const {data}=await SB.from('user_data').select('plants,massifs').eq('user_id',USER.id).maybeSingle();
  const mrg=(c,l)=>{const m=new Map();(l||[]).forEach(x=>m.set(x.id,x));(c||[]).forEach(x=>m.set(x.id,x));return [...m.values()]};
- plants=mrg(data&&data.plants,plants);massifs=mrg(data&&data.massifs,massifs);save();saveM();render();renderM();renderHome()}catch(e){}}
+ plants=mrg(data&&data.plants,plants);massifs=mrg(data&&data.massifs,massifs);save();saveM();render();renderM();renderHome()}catch(e){}setLoad()}
 /* modifier une plante */
 function jRender(p){const ph=p.photos||[];$('#jph').innerHTML=ph.length?'<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px">'+ph.map((x,i)=>'<figure style="margin:0;text-align:center;flex:none"><img class="th" style="width:84px;height:84px" alt="" src="'+x.img+'"><figcaption class="mut" style="font-size:11px">'+fmt(x.d)+' <button type="button" data-jx="'+i+'" aria-label="Supprimer cette photo" style="background:none;color:var(--bad);padding:0 6px;min-height:28px">✕</button></figcaption></figure>').join('')+'</div>':'<p class="mut">Aucune photo. Ajoutez-en régulièrement pour suivre l\'évolution (avant / après).</p>';
  $('#jcmp').hidden=ph.length<2;const h=(p.hist||[]).slice(0,8);$('#jhist').innerHTML=h.length?h.map(x=>TY[x.k][0]+' '+TY[x.k][1]+' · '+fmt(x.d)).join('<br>'):'Aucune intervention enregistrée pour le moment.';
@@ -697,7 +707,7 @@ const INV=[['ambrosia','Ambroisie à feuilles d\'armoise','Lutte obligatoire, tr
 function inv(l,n){l=String(l||'').toLowerCase();n=String(n||'').toLowerCase();return INV.find(x=>l.includes(x[0])||n.includes(x[1].toLowerCase().split(' (')[0].split(' /')[0]))||null}
 const invB=(l,n)=>{const x=inv(l,n);return x?'<div class="dang"><b>Plante exotique envahissante en Suisse</b> ('+esc(x[1])+'). '+esc(x[2])+' Évitez de la planter, ne la mettez pas au compost. <a href="https://www.infoflora.ch/" target="_blank" rel="noopener" style="color:inherit">Signaler ou en savoir plus : Info Flora ↗</a></div>':''};
 /* diagnostic */
-const DIAGP="Tu es phytopathologiste. Analyse la plante de cette photo et son éventuel problème (maladie, ravageur, carence, stress hydrique, coup de soleil, gel…). Si ce n'est pas une plante, mets \"est_plante\":false. Privilégie les solutions douces et préventives (taille sanitaire, arrosage, paillage, auxiliaires, savon noir…) et ne recommande aucun produit phytosanitaire de synthèse. JSON: {\"est_plante\":true,\"plante\":\"nom courant\",\"probleme\":\"nom du problème probable, ou aucun problème net\",\"type\":\"maladie|ravageur|carence|stress|aucun\",\"confiance\":\"faible|moyenne|forte\",\"gravite\":\"faible|moyenne|elevee\",\"description\":\"2 phrases\",\"causes\":[\"...\"],\"actions\":[\"...\"],\"prevention\":[\"...\"],\"consulter\":\"quand demander l'avis d'un professionnel\"}"+" Réponds uniquement avec du JSON valide, en français, sans markdown. N'utilise JAMAIS de guillemets doubles à l'intérieur des textes, et pas de virgule finale.";
+const DIAGP="Tu es phytopathologiste. Analyse la plante de cette photo et son éventuel problème (maladie, ravageur, carence, stress hydrique, coup de soleil, gel…). Si ce n'est pas une plante, mets \"est_plante\":false. Privilégie les solutions douces et préventives (taille sanitaire, arrosage, paillage, auxiliaires, savon noir…) et ne recommande aucun produit phytosanitaire de synthèse. JSON: {\"est_plante\":true,\"plante\":\"nom courant\",\"probleme\":\"nom du problème probable, ou aucun problème net\",\"type\":\"maladie|ravageur|carence|stress|aucun\",\"confiance\":\"faible|moyenne|forte\",\"gravite\":\"faible|moyenne|elevee\",\"description\":\"2 phrases\",\"causes\":[\"...\"],\"actions\":[\"...\"],\"prevention\":[\"...\"],\"consulter\":\"quand demander l'avis d'un professionnel\"}"+" Réponds uniquement avec du JSON valide, avec toutes les valeurs textuelles rédigées en "+LN+" (les clés JSON et les valeurs d'énumération indiquées restent inchangées), sans markdown. N'utilise JAMAIS de guillemets doubles à l'intérieur des textes, et pas de virgule finale.";
 function setDiag(d){DIAG=d;$('#tI').classList.toggle('on',!d);$('#tD').classList.toggle('on',d);$('#idh').textContent=d?'Diagnostiquer une plante':'Identifier une plante';$('#idp').textContent=d?'Photographiez la partie malade (feuille, tige, fruit) : problème probable, causes et gestes à faire.':'Prenez une photo : espèce, entretien, bienfaits et toxicité.';$('#idr').innerHTML='';$('#ide').textContent=''}
 $('#tI').onclick=()=>setDiag(false);$('#tD').onclick=()=>setDiag(true);
 function showDiag(r){const g=String(r.gravite||'').toLowerCase(),cl=/elev|haut|fort/.test(g)?'dang':/moy/.test(g)?'warn':'good',L=a=>(a||[]).map(x=>'<div>• '+esc(x)+'</div>').join('');
@@ -736,6 +746,7 @@ try{if(!localStorage.getItem('vdo')&&!CONF)setTimeout(()=>ob(0),700)}catch(e){}
 /* application installable */
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 let IPR=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();IPR=e;try{renderHome()}catch(_){}});
+document.querySelectorAll('#lg a').forEach(a=>{if(a.dataset.l==LANG)a.classList.add('on');a.onclick=()=>{if(a.dataset.l!=LANG)setLang(a.dataset.l)}});
 $('#fi').onclick=async()=>{if(IPR){IPR.prompt();IPR=null;return}ob(0,'inst')};
 try{if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)$('#fi').hidden=true}catch(e){}
 
