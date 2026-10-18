@@ -612,15 +612,17 @@ function modeUI(root,cfg,lieuFn,onCh){const V=root._v||(root._v={k:'a',y:new Dat
   q('[data-tm]',b=>b.onchange=()=>{const v=+b.value;cu.tmin=isFinite(v)?v:10;ch(0)})};
  root._draw=draw;draw();return draw}
 /* fiche détaillée d'une découverte */
-async function showDisc(id){let d=GAL.find(x=>x.id==id);
+async function showDisc(id,tr){let d=GAL.find(x=>x.id==id);
  if(!d){const r=await SB.from('discoveries').select('*,profiles(pseudo)').eq('id',id).maybeSingle();d=r.data}
  if(!d)return;
- const img=SB.storage.from('discoveries').getPublicUrl(d.image_path).data.publicUrl,dt=d.details||{},e=dt.entretien||{},tx=dt.toxicite||{},own=USER&&d.user_id==USER.id,bf=(dt.bienfaits&&dt.bienfaits.length?dt.bienfaits:d.bienfaits)||[];
+ const img=SB.storage.from('discoveries').getPublicUrl(d.image_path).data.publicUrl,own=USER&&d.user_id==USER.id;let dt=d.details||{},e=dt.entretien||{},tx=dt.toxicite||{},bf=(dt.bienfaits&&dt.bienfaits.length?dt.bienfaits:d.bienfaits)||[],ttl=d.nom,dsc=dt.description||d.description;
+ const tk='vdt'+id+LANG;if(LANG!='fr'&&!tr){try{tr=JSON.parse(localStorage.getItem(tk)||'null')}catch(x){}}
+ if(tr&&LANG!='fr'){ttl=tr.nom||ttl;dsc=tr.description||dsc;dt={...dt,famille:tr.famille||dt.famille,proprietes:tr.proprietes&&tr.proprietes.length?tr.proprietes:dt.proprietes};e={...e,arrosage:tr.arrosage||e.arrosage,lumiere:tr.lumiere||e.lumiere,sol:tr.sol||e.sol,engrais:tr.engrais||e.engrais,taille:tr.taille||e.taille,temperature:tr.temperature||e.temperature};tx={...tx,details:tr.toxicite||tx.details};if(tr.bienfaits&&tr.bienfaits.length)bf=tr.bienfaits}
  const rows=[['💧 Arrosage',e.arrosage],['☀️ Lumière',e.lumiere],['🪴 Sol',e.sol],['🌱 Engrais',e.engrais],['✂️ Taille',e.taille],['🌡️ Température',e.temperature]].filter(a=>a[1]);
- mg(d.nom,`<img id="dpic" src="${esc(img)}" alt="${esc(d.nom)}" style="width:100%;max-height:55vh;object-fit:cover;border-radius:14px;cursor:zoom-in"><div class="mut" style="margin:4px 0 8px;font-size:12px">Touchez la photo pour l'agrandir</div>
+ mg(ttl,`<img id="dpic" src="${esc(img)}" alt="${esc(d.nom)}" style="width:100%;max-height:55vh;object-fit:cover;border-radius:14px;cursor:zoom-in"><div class="mut" style="margin:4px 0 8px;font-size:12px">Touchez la photo pour l'agrandir</div>
  <div class="mut"><i>${esc(d.latin)}</i>${dt.famille?' · '+esc(dt.famille):''}${dt.confiance?' · confiance '+esc(dt.confiance):''}</div>
  <div style="margin:8px 0">${d.toxique?'<span class="tag tox">⚠ Toxique</span>':'<span class="tag ok">✓ Non signalée toxique</span>'}${badges(dt.indicateurs||{})}</div>${invB(d.latin,d.nom)}
- <p>${esc(dt.description||d.description)}</p>
+ <p>${esc(dsc)}</p>
  ${tx.details?'<h3>Toxicité</h3><div>'+esc(tx.details)+'</div>':''}
  ${rows.length?'<h3>Entretien</h3>'+rows.map(a=>'<div><span class="mut">'+a[0]+'</span> '+esc(a[1])+'</div>').join(''):''}
  ${bf.length?'<h3>Bienfaits</h3>'+bf.map(b=>'<span class="tag ok">'+esc(b)+'</span>').join(''):''}
@@ -629,6 +631,10 @@ async function showDisc(id){let d=GAL.find(x=>x.id==id);
  <h3>Où et qui</h3><div class="mut">${d.lieu?ICO('pin')+' '+esc(d.lieu)+'<br>':''}par @${esc((d.profiles&&d.profiles.pseudo)||'jardinier')} · ${new Date(d.created_at).toLocaleDateString(LOC)}</div>
  <div class="row" style="margin-top:12px">${d.lat!=null?'<button class="ghost" id="dmap" type="button">📍 Voir sur la carte</button>':''}${own?'<button class="ghost" id="dpos" type="button">✏️ '+(d.lat!=null?'Modifier la position':'Placer sur la carte')+'</button>':''}</div>
  <p class="mut" style="font-size:12px">Identification par IA, indicative. Ne consommez aucune plante sur cette base.</p>`);
+ if(LANG!='fr'&&!tr&&d.details){(async()=>{try{const o={nom:d.nom,description:dsc,famille:dt.famille||'',toxicite:tx.details||'',arrosage:e.arrosage||'',lumiere:e.lumiere||'',sol:e.sol||'',engrais:e.engrais||'',taille:e.taille||'',temperature:e.temperature||'',bienfaits:bf,proprietes:dt.proprietes||[]};
+  const r=await ask("Traduis en "+LN+" toutes les valeurs textuelles de cet objet JSON (fiche d'une plante), sans changer les clés ni la structure, sans ajouter de commentaire : "+JSON.stringify(o)+J);
+  if(!r||typeof r!='object')return;try{localStorage.setItem(tk,JSON.stringify(r))}catch(x){}
+  if($('#dpic')&&!$('#mg').hidden)showDisc(id,r)}catch(x){}})()}
  $('#dpic').onclick=()=>{const z=document.createElement('div');z.id='zm';z.innerHTML='<img alt="" src="'+esc(img)+'">';z.onclick=()=>z.remove();document.body.appendChild(z)};
  const m=$('#dmap');if(m)m.onclick=()=>{$('#mg').hidden=true;openBox('#mapbox');ensureMap();MAP.setView([+d.lat,+d.lon],16);$('#map').scrollIntoView({block:'center'})};
  const p=$('#dpos');if(p)p.onclick=()=>startEdit(d)}
