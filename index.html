@@ -77,7 +77,7 @@ body.tm [data-e],body.tm [data-x],body.tm #addbox,body.tm [data-mo],body.tm [dat
 nav{justify-content:center;gap:12px}nav button{flex:0 1 200px}
 #s1.on,#dash{column-count:2;column-gap:18px}#s1.on>*,#dash>*{break-inside:avoid}
 #s0,#s2{max-width:760px;margin-left:auto;margin-right:auto}footer{max-width:1120px;margin-left:auto;margin-right:auto}}
-</style><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌱%3C/text%3E%3C/svg%3E">
+</style><link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -920,4 +920,10 @@ function teamModal(){const t=TEAM;if(!t)return;const chef=isChef(),act=t.members
   conf('Quitter l\'équipe ?','Vous n\'aurez plus accès au jardin de <b>'+esc(t.name)+'</b>.','Quitter',async()=>{await SB.from('team_members').delete().eq('team_id',t.id).eq('user_id',USER.id);exitTeam();await loadTeams();$('#mg').hidden=true})};
  const dl2=$('#tdl');if(dl2)dl2.onclick=()=>conf('Supprimer l\'équipe ?','Toutes les plantes et massifs de <b>'+esc(t.name)+'</b> seront supprimés pour tous les membres. Cette action est définitive.','Supprimer',async()=>{await SB.from('teams').delete().eq('id',t.id);exitTeam();await loadTeams();$('#mg').hidden=true})}
 
-</script></body></html>
+</script><script>
+/* accessibilité : relie chaque libellé au champ qui le suit */
+(function(){var n=0,q=0;function fix(){q=0;document.querySelectorAll('label:not([for])').forEach(function(l){if(l.querySelector('input,select,textarea'))return;var e=l.nextElementSibling;while(e&&e.tagName=='BR')e=e.nextElementSibling;if(!e||!/^(INPUT|SELECT|TEXTAREA)$/.test(e.tagName)||e.type=='hidden')return;if(!e.id)e.id='lf'+(++n);l.htmlFor=e.id})}
+function sched(){if(!q){q=1;requestAnimationFrame(fix)}}
+fix();try{new MutationObserver(sched).observe(document.body,{childList:true,subtree:true})}catch(e){}})();
+</script>
+</body></html>
