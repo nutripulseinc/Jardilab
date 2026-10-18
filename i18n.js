@@ -6,7 +6,7 @@
   if (!/^(fr|de|it)$/.test(L)) { var n = (navigator.language || 'fr').slice(0, 2); L = /^(de|it)$/.test(n) ? n : 'fr'; }
   window.LANG = L;
   window.LOC = { fr: 'fr-FR', de: 'de-CH', it: 'it-CH' }[L];
-  document.documentElement.lang = L;
+  document.documentElement.lang = L; document.documentElement.setAttribute('translate', 'no');
   window.setLang = function (l) { try { localStorage.setItem('vdl', l); } catch (e) {} location.reload(); };
   if (L === 'fr') return;
 
