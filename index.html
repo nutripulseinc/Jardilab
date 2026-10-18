@@ -192,6 +192,7 @@ const save=()=>{if(TEAM){teamSave();return}try{localStorage.setItem('vd',JSON.st
 async function ask(p,img,txt){const {data:{session}}=await SB.auth.getSession();if(!session){openM();throw new Error("Connectez-vous (bouton en haut à droite) pour utiliser l'IA.")}
  let image=null;if(img)image=await new Promise(ok=>{const r=new FileReader();r.onload=()=>ok(r.result.split(',')[1]);r.readAsDataURL(img)});
  for(let k=0;k<3;k++){const {data,error}=await SB.functions.invoke('ai',{body:{prompt:k?p+" IMPORTANT : ta réponse précédente était un JSON invalide. Réponds avec un JSON STRICTEMENT valide, sans aucun guillemet double à l'intérieur des textes, sans virgule finale.":p,image}});
+  if(error&&error.context&&error.context.status==429){let q={};try{q=await error.context.json()}catch(e){}throw new Error(q.scope=='global'?"L'IA est très sollicitée aujourd'hui. Réessayez demain.":q.kind=='i'?"Limite d'analyses photo atteinte pour aujourd'hui. Réessayez demain.":"Limite d'utilisation de l'IA atteinte pour aujourd'hui. Réessayez demain.")}
   if(error||!data){if(k==2)throw new Error('Service IA indisponible, réessayez.');continue}
   const t=data.text||'';if(txt)return t;const c=t.replace(/```json|```/g,'').trim();
   try{return JSON.parse(c)}catch(e){try{return JSON.parse(c.slice(c.indexOf('{'),c.lastIndexOf('}')+1))}catch(e2){if(k==2)throw new Error("L'IA a renvoyé une réponse illisible, réessayez.")}}}}
