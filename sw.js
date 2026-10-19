@@ -1,7 +1,7 @@
 // Jardilab : application installable, usage hors ligne limité
-const C = 'jardilab-v3';
+const C = 'jardilab-v4';
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(C).then(c => c.addAll(['/', '/index.html', '/icon-192.png'])).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(C).then(c => c.addAll(['/', '/index.html', '/icon-192.png', '/badge-96.png'])).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== C).map(x => caches.delete(x)))).then(() => self.clients.claim()));
@@ -39,7 +39,7 @@ self.addEventListener('push', e => {
         if (r.ok) { const j = await r.json(); if (j.t) t = j.t; if (j.b) b = j.b; }
       }
     } catch (_) {}
-    await self.registration.showNotification(t, { body: b, icon: '/icon-192.png', badge: '/icon-192.png', tag: 'jardilab-rappel' });
+    await self.registration.showNotification(t, { body: b, icon: '/icon-192.png', badge: '/badge-96.png', tag: 'jardilab-rappel' });
   })());
 });
 self.addEventListener('notificationclick', e => {
