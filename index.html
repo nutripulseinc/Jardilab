@@ -89,12 +89,12 @@ nav{justify-content:center;gap:12px}nav button{flex:0 1 200px}
 #trt{position:fixed;z-index:302;background:#0f1612;border:1px solid var(--g);border-radius:14px;padding:14px;box-shadow:0 8px 30px #000a;width:min(380px,calc(100vw - 24px));font-size:14px;line-height:1.45}
 #trt p{margin:6px 0 12px}#trt .row{gap:8px;flex-wrap:nowrap}#trt .row button{flex:1;min-height:42px;padding:8px 10px}
 
-#spl{position:fixed;inset:0;z-index:2147483000;background:#070a08;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;animation:splOut .45s ease 1.5s forwards}
+#spl{position:fixed;inset:0;box-sizing:border-box;padding-top:16px;z-index:2147483000;background:#070a08;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;animation:splOut .45s ease 1.5s forwards}
 #spl svg{width:92px;height:92px;overflow:visible}
 #spl .sb{transform-origin:24px 24px;animation:splB .7s cubic-bezier(.2,.8,.2,1) both}
 #spl .sl{transform-origin:24px 24px;animation:splL .75s cubic-bezier(.34,1.56,.64,1) .25s both}
 #spl .sv{stroke-dasharray:1;stroke-dashoffset:1;animation:splV .45s ease .75s forwards}
-#spl .st{position:absolute;left:0;right:0;top:calc(50% + 66px);text-align:center;font:700 34px/1 Outfit,system-ui,sans-serif;color:#fff;letter-spacing:.2em;opacity:0;animation:splT .7s ease .55s forwards}
+#spl .st{position:absolute;left:0;right:0;top:calc(50% + 74px);text-align:center;font:700 34px/1 Outfit,system-ui,sans-serif;color:#fff;letter-spacing:.2em;opacity:0;animation:splT .7s ease .55s forwards}
 #spl .st b{color:#4ade80}
 @keyframes splB{from{opacity:0;transform:scale(1.4)}to{opacity:1;transform:scale(1)}}
 @keyframes splL{from{opacity:0;transform:scale(.3) rotate(-14deg)}to{opacity:1;transform:scale(1) rotate(0)}}
