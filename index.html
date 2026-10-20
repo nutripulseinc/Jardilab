@@ -134,6 +134,7 @@ nav{justify-content:center;gap:12px}nav button{flex:0 1 200px}
   <input id="pk2" type="checkbox" hidden>
   <label for="pn">Nom <span id="pnh">de la plante</span></label><input id="pn" placeholder="ex : Lavande, Monstera, Rosier…">
   <div id="mz" hidden><label>Plantes du massif (facultatif)</label><input id="pl" placeholder="ex : lavande, sauge, achillée"><p class="sub">Le massif est arrosé et entretenu comme un seul ensemble dans l'agenda.</p></div>
+  <div id="tsa"></div>
   <label for="pw">Où se trouve-t-elle ?</label><select id="pw"><option>Intérieur</option><option>Jardin</option><option>Balcon / terrasse</option></select>
 
   <details class="acc2" id="opts"><summary>Plus d'options : nombre, exposition, calendrier, photo…</summary>
@@ -151,10 +152,10 @@ nav{justify-content:center;gap:12px}nav button{flex:0 1 200px}
   </details>
   <button id="pa" style="width:100%;margin-top:6px">Ajouter à mon jardin</button> <span id="pas" class="spin" hidden>Calcul…</span><p id="pae" class="err"></p></div>
  </details>
- <div class="card"><h2 id="dt">À faire</h2><div id="tl"></div></div>
  <details class="card acc" id="ibox" open><summary><span>🌿 Inventaire</span><span class="cnt" id="icnt"></span></summary>
   <input id="sq" type="search" placeholder="Rechercher une plante ou un massif…" style="margin-top:0"><div class="row"><select id="sf"><option value="">Tous les secteurs</option></select><select id="sl"><option value="">Tous les lieux</option><option>Intérieur</option><option>Jardin</option><option>Balcon / terrasse</option></select></div>
   <label style="display:flex;gap:8px;align-items:center;margin:0 0 8px;font-size:14px;color:var(--g2)"><input id="so" type="checkbox" style="width:auto;margin:0"> Seulement celles qui ont une tâche en retard</label><div id="pls"></div></details>
+ <div class="card"><h2 id="dt">À faire</h2><div id="tl"></div></div>
  <div id="tm"></div>
   <div id="bk"></div>
  <div class="card" style="padding:12px 14px"><h2 style="font-size:16px;margin:0 0 8px"><svg class="i"><use href="#i-sun"/></svg> Météo du jardin</h2><div id="wx"><p class="mut">Renseignez votre commune pour voir la météo et adapter l'agenda.</p></div>
@@ -941,13 +942,15 @@ function teamSave(){if(!TEAM||!USER)return;clearTimeout(TPEND);TPEND=setTimeout(
 setInterval(()=>{if(TEAM&&!document.hidden)teamFetch()},60000);
 document.addEventListener('visibilitychange',()=>{if(TEAM&&!document.hidden)teamFetch()});
 function renderTm(){const el=$('#tm');if(!el)return;
- if(!USER){el.innerHTML='';document.body.classList.remove('tm');return}
+ if(!USER){el.innerHTML='';const ta0=$('#tsa');if(ta0)ta0.innerHTML='';document.body.classList.remove('tm');return}
  let h='';
  TINV.forEach(i=>h+='<div class="card" style="padding:12px 14px;border-color:var(--g)"><b>👥 Invitation</b><p style="margin:6px 0">Vous êtes invité(e) à rejoindre l\'équipe <b>'+esc(i.name)+'</b>.</p><div class="row"><button type="button" data-ia="'+i.team_id+'">Accepter</button><button type="button" class="ghost" data-id="'+i.team_id+'">Refuser</button></div></div>');
  h+='<div class="card" style="padding:12px 14px"><label style="margin-top:0">Jardin affiché</label><select id="tsel"><option value="">Mon jardin personnel</option>'+TEAMS.map(t=>'<option value="'+t.id+'"'+(TEAM&&TEAM.id==t.id?' selected':'')+'>👥 '+esc(t.name)+'</option>').join('')+'<option value="+">＋ Créer une équipe…</option></select>';
  if(TEAM)h+='<div class="row" style="margin-top:8px;align-items:center"><button type="button" class="ghost" id="tmg">👥 Équipe</button><label style="display:flex;gap:8px;align-items:center;margin:0"><input type="checkbox" id="tmine"'+(TMINE?' checked':'')+'> Seulement mes tâches</label></div>'+(isChef()?'':'<p class="mut" style="margin:8px 0 0;font-size:13px">Vous êtes membre : vous cochez les tâches faites. Seul le chef modifie les plantes.</p>');
  el.innerHTML=h+'</div>';
- $('#tsel').onchange=e=>{const v=e.target.value;if(v=='+'){e.target.value=TEAM?TEAM.id:'';createTeam()}else if(!v)exitTeam();else enterTeam(v)};
+ const chg=e=>{const v=e.target.value;if(v=='+'){e.target.value=TEAM?TEAM.id:'';createTeam()}else if(!v)exitTeam();else enterTeam(v)};
+ $('#tsel').onchange=chg;
+ const ta=$('#tsa');if(ta){ta.innerHTML='<label for="tsa2">Ajouter dans</label><select id="tsa2"><option value="">Mon jardin personnel</option>'+TEAMS.map(t=>'<option value="'+t.id+'"'+(TEAM&&TEAM.id==t.id?' selected':'')+'>👥 '+esc(t.name)+'</option>').join('')+'</select>';ta.hidden=!TEAMS.length;$('#tsa2').onchange=chg}
  const tm=$('#tmine');if(tm)tm.onchange=()=>{TMINE=tm.checked;refreshAll()};
  const tg=$('#tmg');if(tg)tg.onclick=teamModal;
  el.querySelectorAll('[data-ia]').forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await SB.rpc('team_accept',{t:b.dataset.ia});if(error){toast('Invitation introuvable');b.disabled=false;return}await loadTeams();toast('Vous avez rejoint l\'équipe',0)});
@@ -998,8 +1001,8 @@ const TOURS={
   {s:'#pw',o:'#addbox',t:"Où se trouve-t-elle ? « Intérieur », « Jardin » ou « Balcon / terrasse » : une plante dehors dépend de la pluie, du gel et de la chaleur."},
   {s:'#opts>summary',o:'#addbox',t:"Facultatif : nombre de plantes, exposition, calendrier (automatique ou à votre rythme), secteur, position sur la carte, photo, remarque. Vous pouvez tout laisser tel quel."},
   {s:'#pa',o:'#addbox',t:"Touchez « Ajouter à mon jardin » : Jardilab crée la fiche et ajoute les soins à l'agenda."},
-  {s:'#dt',up:'.card',t:"Les soins du jour sont ici. Touchez le bouton d'une tâche pour la cocher une fois faite."},
   {s:'#ibox>summary',t:"L'inventaire regroupe vos plantes, vos massifs et vos plans de conception : modifiez-les, téléchargez leur fiche en PDF ou supprimez-les."},
+  {s:'#dt',up:'.card',t:"Les soins du jour sont ici. Touchez le bouton d'une tâche pour la cocher une fois faite."},
   {s:'#wx',up:'.card',t:"La météo de votre commune adapte les soins : l'arrosage est reporté s'il pleut, et des alertes signalent gel, chaleur ou vent. Touchez « Changer de lieu » pour choisir votre commune."},
   {s:'#cbox>summary',t:"Le calendrier montre tous les soins du mois (impression en PDF ou export en CSV)."}],
 2:[{s:'#ty',up:'.row',t:"Choisissez le contenant (massif, bac, pot…) et sa forme."},
