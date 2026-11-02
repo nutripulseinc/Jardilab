@@ -115,7 +115,7 @@ nav{justify-content:center;gap:12px}nav button{flex:0 1 200px}
 <header style="display:flex;align-items:center;gap:12px"><svg width="46" height="46"><use href="#lg"/></svg><div><h1>Jardi<span>lab</span></h1><p>Identifiez, entretenez, composez votre jardin.</p></div><button id="tq" type="button" class="ghost" aria-label="Visite guidée" title="Visite guidée" hidden></button><button id="lb" class="ghost" style="padding:8px 14px;white-space:nowrap"><svg class="i"><use href="#i-user"/></svg> Connexion</button></header>
 <main>
 <section id="s9" class="sec on">
- <div class="card hero"><h2 style="margin:0 0 4px">Que voulez-vous faire ?</h2><p class="mut" style="margin:0 0 14px">Photographiez une plante : espèce, entretien, toxicité.</p><button data-go="0" class="big"><svg class="i"><use href="#i-camera"/></svg> Identifier une plante</button><div class="row" style="margin-top:10px"><button class="ghost" data-go="1"><svg class="i"><use href="#i-pot"/></svg> Mon jardin</button><button class="ghost" data-go="2"><svg class="i"><use href="#i-leaf"/></svg> Concevoir un massif</button></div></div>
+ <div class="card hero"><h2 style="margin:0 0 4px">Que voulez-vous faire ?</h2><p class="mut" style="margin:0 0 14px">Photographiez une plante : espèce, entretien, toxicité.</p><button data-go="0" class="big"><svg class="i"><use href="#i-camera"/></svg> Identifier une plante</button><div class="row" style="margin-top:10px"><button class="ghost" data-go="2"><svg class="i"><use href="#i-leaf"/></svg> Concevoir un massif</button><button class="ghost" data-go="1"><svg class="i"><use href="#i-pot"/></svg> Mon jardin</button></div></div>
 <div id="dash"></div>
 </section>
 <section id="s0" class="sec">
@@ -156,10 +156,10 @@ nav{justify-content:center;gap:12px}nav button{flex:0 1 200px}
   <button id="pa" style="width:100%;margin-top:6px">Ajouter à mon jardin</button> <span id="pas" class="spin" hidden>Calcul…</span><p id="pae" class="err"></p></div>
  </details>
  <div id="tm"></div>
- <details class="card acc" id="ibox" open><summary><span>🌿 Inventaire</span><span class="cnt" id="icnt"></span></summary>
+ <details class="card acc" id="ibox"><summary><span>🌿 Inventaire</span><span class="cnt" id="icnt"></span></summary>
   <input id="sq" type="search" placeholder="Rechercher une plante ou un massif…" style="margin-top:0"><div class="row"><select id="sf"><option value="">Tous les secteurs</option></select></div>
   <div hidden><select id="sl"><option value="">Tous les lieux</option><option>Intérieur</option><option value="ext">Extérieur</option></select><input id="so" type="checkbox"><input id="sgb" type="checkbox" checked></div><div id="pls"></div><div class="row" style="margin-top:12px"><button type="button" class="ghost" id="rcs">📊 Recensement (PDF)</button><button type="button" class="ghost" id="rcv">⬇️ Recensement (CSV)</button></div></details>
- <div class="card"><h2 id="dt">À faire</h2><div id="tl"></div></div>
+ <details class="card acc" id="tbox"><summary><span id="dt">À faire</span><span class="cnt" id="tcnt"></span></summary><div id="tl"></div></details>
   <div id="bk"></div>
  <div class="card" style="padding:12px 14px"><h2 style="font-size:16px;margin:0 0 8px"><svg class="i"><use href="#i-sun"/></svg> Météo du jardin</h2><div id="wx"><p class="mut">Renseignez votre commune pour voir la météo et adapter l'agenda.</p></div>
   <details class="acc2" id="wbox"><summary>📍 Changer de lieu · alertes</summary><div class="row"><input id="wc" placeholder="Ville / commune" style="margin:0"><button id="wb">Chercher</button></div>
@@ -300,7 +300,7 @@ function render(){try{gRender()}catch(e){}try{renderBk()}catch(e){}try{$('#gcnt'
  $('#cal').innerHTML=h;document.querySelectorAll('.cal [data-d]').forEach(c=>c.onclick=()=>{sel=+c.dataset.d;JD=[];render();const t=$('#dt2');if(t)t.scrollIntoView({block:'nearest',behavior:'smooth'})});
  let lst=sel<today()?[]:evs(sel,sel,true).concat(sel==today()?dueLate(plants.filter(p=>teamMine(p)&&(!$('#sf').value||p.sec==$('#sf').value))).filter(e=>!(e.d==today()&&evs(sel,sel,true).some(x=>x.p==e.p&&x.k==e.k))).map(e=>{const m=e.cu?wetSkip(e,e.d):null;if(m)e.sk=m;return e}):[]);
  JD.filter(x=>x.sel==sel).forEach(x=>{const p=plants.find(q=>q.id==x.pid);if(p&&!lst.some(y=>y.p==p&&y.k==x.k&&y.d==x.d))lst.push({d:x.d,p,k:x.k,jd:1})});
- $('#dt').textContent=$('#dt2').textContent=sel==today()?"À faire aujourd'hui":'Le '+fmt(sel);
+ $('#dt').textContent=$('#dt2').textContent=sel==today()?"À faire aujourd'hui":'Le '+fmt(sel);try{$('#tcnt').textContent=lst.filter(e=>!(e.jd||isDone(e))).length||''}catch(e){}
  $('#tl').innerHTML=$('#tl2').innerHTML=lst.length?lst.slice().sort((a,b)=>(b.k=='g')-(a.k=='g')).map(taskRow).join(''):(plants.length?'<p class="mut">Rien de prévu ce jour 🌿</p>':'<p class="mut">Aucune plante pour l\'instant. Ajoutez la première pour obtenir un agenda d\'entretien automatique.</p><button class="ghost" data-fp type="button">+ Ajouter ma première plante</button>');
  document.querySelectorAll('#tl .task button,#tl2 .task button').forEach(b=>b.onclick=()=>{const p=plants.find(x=>x.id==b.dataset.p),k=b.dataset.k;if(!p)return;snap();
   if(b.dataset.rp){p.nx.a=Math.max(p.nx.a,today())+2;save();render();renderHome();toast('Arrosage reporté de 2 jours',1);return}
@@ -1097,7 +1097,7 @@ const TOURS={
   {s:'#ent>summary',o:'#addbox',t:"Étapes 3 et 4 (facultatives) : photo générale et remarque, puis l'entretien, calculé automatiquement ou réglé par vous."},
   {s:'#pa',o:'#addbox',t:"Touchez « Ajouter à mon jardin » : Jardilab crée la fiche et ajoute les soins à l'agenda. Touchez ensuite le nom dans l'inventaire pour voir le détail."},
   {s:'#ibox>summary',t:"L'inventaire regroupe vos plantes, vos massifs et vos plans de conception : modifiez-les, téléchargez leur fiche en PDF ou supprimez-les."},
-  {s:'#dt',up:'.card',t:"Les soins du jour sont ici. Touchez le bouton d'une tâche pour la cocher une fois faite."},
+  {s:'#tbox>summary',t:"Les soins du jour sont ici. Touchez le bouton d'une tâche pour la cocher une fois faite."},
   {s:'#wx',up:'.card',t:"La météo de votre commune adapte les soins : l'arrosage est reporté s'il pleut, et des alertes signalent gel, chaleur ou vent. Touchez « Changer de lieu » pour choisir votre commune."},
   {s:'#cbox>summary',t:"Le calendrier montre tous les soins du mois (impression en PDF ou export en CSV)."}],
 2:[{s:'#ty',up:'.row',t:"Choisissez le contenant (massif, bac, pot…) et sa forme."},
