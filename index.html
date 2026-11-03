@@ -158,7 +158,7 @@ nav{justify-content:center;gap:12px}nav button{flex:0 1 200px}
  <div id="tm"></div>
  <details class="card acc" id="ibox"><summary><span>🌿 Inventaire</span><span class="cnt" id="icnt"></span></summary>
   <input id="sq" type="search" placeholder="Rechercher une plante ou un massif…" style="margin-top:0"><div class="row"><select id="sf"><option value="">Tous les secteurs</option></select></div>
-  <div hidden><select id="sl"><option value="">Tous les lieux</option><option>Intérieur</option><option value="ext">Extérieur</option></select><input id="so" type="checkbox"><input id="sgb" type="checkbox" checked></div><div id="pls"></div><div class="row" style="margin-top:12px"><button type="button" class="ghost" id="rcs">📊 Recensement (PDF)</button><button type="button" class="ghost" id="rcv">⬇️ Recensement (CSV)</button></div></details>
+  <div hidden><select id="sl"><option value="">Tous les lieux</option><option>Intérieur</option><option value="ext">Extérieur</option></select><input id="so" type="checkbox"><input id="sgb" type="checkbox" checked></div><div id="pls"></div><div class="row" style="margin-top:12px"><button type="button" class="ghost" id="rcs">📊 Recensement (PDF)</button><button type="button" class="ghost" id="rcv">⬇️ Recensement (CSV)</button></div><div class="row" style="margin-top:8px"><button type="button" class="ghost" id="sav">📦 Archiver la saison</button><button type="button" class="ghost" id="svw">🗓️ Saisons archivées</button></div></details>
  <details class="card acc" id="tbox"><summary><span id="dt">À faire</span><span class="cnt" id="tcnt"></span></summary><div id="tl"></div></details>
   <div id="bk"></div>
  <div class="card" style="padding:12px 14px"><h2 style="font-size:16px;margin:0 0 8px"><svg class="i"><use href="#i-sun"/></svg> Météo du jardin</h2><div id="wx"><p class="mut">Renseignez votre commune pour voir la météo et adapter l'agenda.</p></div>
@@ -817,7 +817,7 @@ function fichePdf(id){const p=plants.find(x=>x.id==id);if(!p)return;const m=p.ki
  setTimeout(()=>window.print(),150)}
 function cloudSave(){if(!USER||TEAM)return;clearTimeout(CS);CS=setTimeout(async()=>{try{await SB.from('user_data').upsert({user_id:USER.id,plants,massifs,updated_at:new Date().toISOString()})}catch(e){}},800)}
 /* réglages synchronisés entre appareils (commune, préférences d'entretien, langue) */
-const SK=['vdw','vdcfg','vdpro','vdcu','vdl'];let STm=null;
+const SK=['vdw','vdcfg','vdpro','vdcu','vdl','vdar'];let STm=null;
 const getSet=()=>{const o={};SK.forEach(k=>{try{const v=localStorage.getItem(k);if(v!=null)o[k]=v}catch(e){}});return o};
 function setSave(){if(!USER)return;clearTimeout(STm);STm=setTimeout(async()=>{try{await SB.from('user_data').update({settings:getSet()}).eq('user_id',USER.id)}catch(e){}},1200)}
 try{const _si=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){_si.call(this,k,v);if(this===localStorage&&SK.includes(k))setSave()}}catch(e){}
@@ -907,6 +907,38 @@ $('#rcs').onclick=async()=>{const it=recItems();if(!it.length){toast('Aucun él�
  $('#pz').innerHTML=h;const t0=document.title;document.title='Recensement';const back=()=>{document.title=t0;window.removeEventListener('afterprint',back)};window.addEventListener('afterprint',back);
  const im=[...document.querySelectorAll('#pz img')];await Promise.race([Promise.all(im.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))),new Promise(r=>setTimeout(r,4000))]);setTimeout(()=>window.print(),150)};
 try{if(localStorage.getItem('vdsg')=='0')$('#sgb').checked=false}catch(e){}
+
+/* saisons archivées : photo de l'inventaire + liste d'achats */
+const getARC=()=>{try{const a=JSON.parse(localStorage.getItem('vdar')||'[]');return Array.isArray(a)?a:[]}catch(e){return[]}};
+const setARC=a=>{try{localStorage.setItem('vdar',JSON.stringify(a));return true}catch(e){toast('Mémoire pleine : archive non enregistrée');return false}};
+const arcAgg=it=>{const m={};it.forEach(x=>x.sp.forEach(y=>{const n=(y.n||'?').trim(),k=n.toLowerCase();(m[k]=m[k]||{n,q:0}).q+=+y.q||0}));return Object.values(m).sort((a,b)=>a.n.localeCompare(b.n,'fr'))};
+const arcSum=a=>{const q=a.items.reduce((t,x)=>t+x.q,0),po=a.items.reduce((t,x)=>t+(x.pots||0),0);return{q,po,k:arcAgg(a.items).length,n:a.items.length}};
+$('#sav').onclick=()=>{const it=recItems();if(!it.length){toast('Aucun élément à archiver');return}
+ const d=new Date(),y=d.getFullYear()+(d.getMonth()>=8?1:0),q=it.reduce((t,x)=>t+x.q,0);
+ mg('Archiver la saison',`<p class="mut">${it.length} élément(s) · ${q} plantes seront enregistrés dans les archives.</p><div class="row"><div><label>Saison</label><select id="asn"><option>Printemps</option><option>Été</option><option>Automne</option><option>Hiver</option></select></div><div><label>Année</label><input id="ayr" type="number" value="${y}" min="2000" max="2100"></div></div><label>Note (facultatif)</label><input id="ano" maxlength="80" placeholder="ex. plantations commune">${TEAM?'':'<label style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" id="acl" style="width:auto"> Vider mon inventaire après l\'archivage</label>'}<button id="aok" style="margin-top:14px">📦 Archiver</button>`);
+ $('#aok').onclick=()=>{const arr=getARC();let nom=$('#asn').value+' '+($('#ayr').value||y);const base=nom;let c=2;while(arr.some(a=>a.nom==nom))nom=base+' ('+c++ +')';
+  const items=it.map(x=>({zone:x.zone,nm:x.nm,pot:x.pot,pots:x.pots,lieu:x.lieu,loc:x.loc,q:x.q,sp:x.sp.map(s=>({n:s.n||'',q:+s.q||0}))}));
+  arr.unshift({id:Date.now(),nom,note:$('#ano').value.trim(),date:Date.now(),items});if(!setARC(arr))return;
+  const cl=$('#acl')&&$('#acl').checked;if(cl){plants=[];save();render();try{renderHome()}catch(e){}}
+  toast('Archivé : '+nom);$('#mg').hidden=true}};
+function arcList(){const arr=getARC();
+ mg('Saisons archivées',arr.length?arr.map(a=>{const t=arcSum(a);return `<button class="ghost" data-a="${a.id}" style="display:block;width:100%;text-align:left;margin-bottom:8px"><b>${esc(a.nom)}</b>${a.note?' · '+esc(a.note):''}<br><small class="mut">${new Date(a.date).toLocaleDateString(LOC)} · ${t.n} éléments · ${t.q} plantes · ${t.k} sortes</small></button>`}).join(''):'<p class="mut">Aucune saison archivée pour le moment. Utilisez « Archiver la saison » pour garder une copie de votre inventaire (ex. Printemps 2027).</p>');
+ document.querySelectorAll('#mgc [data-a]').forEach(b=>b.onclick=()=>arcView(+b.dataset.a))}
+$('#svw').onclick=arcList;
+function arcView(id){const a=getARC().find(x=>x.id==id);if(!a){arcList();return}const t=arcSum(a),ag=arcAgg(a.items),zs={};a.items.forEach(x=>(zs[x.zone]=zs[x.zone]||[]).push(x));
+ const zk=Object.keys(zs).sort((x,y)=>x==y?0:x=='Sans zone'?1:y=='Sans zone'?-1:x.localeCompare(y,'fr'));
+ mg(esc(a.nom),`<p class="mut">${a.note?esc(a.note)+' · ':''}${t.n} éléments · ${t.q} plantes · ${t.po} pots/bacs</p>
+ <h3>🛒 À acheter pour refaire pareil</h3><table class="pt"><tr><th>Sorte</th><th style="width:60px">Nb</th></tr>${ag.map(x=>'<tr><td>'+esc(x.n)+'</td><td><b>'+x.q+'</b></td></tr>').join('')}<tr><td><b>Total</b></td><td><b>${t.q}</b></td></tr></table>
+ <h3>Détail par zone</h3>${zk.map(z=>'<p style="margin:10px 0 4px"><b>📍 '+esc(z)+'</b></p><table class="pt">'+zs[z].map(x=>'<tr><td>'+esc(x.nm)+(x.pot&&x.pots>1?' ×'+x.pots:'')+'</td><td>'+x.sp.map(s=>esc(s.n||'?')+' <b>'+s.q+'</b>').join(' · ')+'</td></tr>').join('')+'</table>').join('')}
+ <div class="row" style="margin-top:14px"><button id="apf" class="ghost">📄 Liste d'achats (PDF)</button><button id="acp" class="ghost">📋 Copier la liste</button></div><div class="row" style="margin-top:8px"><button id="abk" class="ghost">← Retour</button><button id="adl" class="ghost">🗑️ Supprimer</button></div>`);
+ $('#abk').onclick=arcList;
+ $('#acp').onclick=async()=>{const tx=a.nom+'\n'+ag.map(x=>x.q+' × '+x.n).join('\n')+'\nTotal : '+t.q;try{await navigator.clipboard.writeText(tx);toast('Liste copiée')}catch(e){toast('Copie impossible')}};
+ let sure=0;$('#adl').onclick=()=>{if(!sure){sure=1;$('#adl').textContent='⚠️ Confirmer la suppression';return}setARC(getARC().filter(x=>x.id!=id));toast('Archive supprimée');arcList()};
+ $('#apf').onclick=()=>{const box=(v,l)=>'<td style="text-align:center;border:1px solid #999;padding:6px"><div style="font-size:20px;font-weight:700">'+v+'</div><div style="font-size:10px;color:#555">'+l+'</div></td>';
+  let h='<div style="display:flex;align-items:center;gap:10px"><svg width="40" height="40"><use href="#lg2"/></svg><div><h2 style="margin:0">'+esc(a.nom)+' — Liste d\'achats</h2><div>'+esc(($('#on')||{}).value||'')+' · archivé le '+new Date(a.date).toLocaleDateString(LOC)+(a.note?' · '+esc(a.note):'')+'</div></div></div><table style="margin:8px 0"><tr>'+box(t.q,'plantes')+box(t.k,'sortes')+box(t.po,'pots / bacs')+box(t.n,'éléments')+'</tr></table>'
+  +'<h3>À acheter</h3><table style="font-size:12px"><tr><th style="width:26px">✓</th><th>Sorte</th><th style="width:70px">Quantité</th></tr>'+ag.map(x=>'<tr style="break-inside:avoid"><td>☐</td><td>'+esc(x.n)+'</td><td style="text-align:center"><b>'+x.q+'</b></td></tr>').join('')+'<tr><td></td><td><b>TOTAL</b></td><td style="text-align:center"><b>'+t.q+'</b></td></tr></table>'
+  +'<h3>Détail par zone</h3>'+zk.map(z=>'<p style="margin:8px 0 3px;break-after:avoid"><b>'+esc(z)+'</b></p><table style="font-size:11px">'+zs[z].map(x=>'<tr style="break-inside:avoid"><td style="width:28%">'+esc(x.nm)+(x.pot&&x.pots>1?' ×'+x.pots:'')+'<br><small>'+esc(x.lieu||'')+'</small></td><td>'+x.sp.map(s=>esc(s.n||'?')+' <b>'+s.q+'</b>').join(' · ')+'</td></tr>').join('')+'</table>').join('');
+  $('#pz').innerHTML=h;const t0=document.title;document.title=a.nom;const back=()=>{document.title=t0;window.removeEventListener('afterprint',back)};window.addEventListener('afterprint',back);setTimeout(()=>window.print(),150)}}
 $('#sgb').onchange=()=>{try{localStorage.setItem('vdsg',$('#sgb').checked?'1':'0')}catch(e){}render()};
 /* plantes envahissantes (Suisse, indicatif : Liste noire / Watch-list Info Flora) */
 const INV=[['ambrosia','Ambroisie à feuilles d\'armoise','Lutte obligatoire, très allergisante : à annoncer au service cantonal.'],['reynoutria','Renouée du Japon / de Sakhaline','Ne jamais composter : déchets à incinérer.'],['fallopia','Renouée du Japon / de Sakhaline','Ne jamais composter : déchets à incinérer.'],['solidago','Solidage du Canada / géant','Colonise prairies et friches.'],['buddleja','Buddleia (arbre à papillons)','Se resème partout, y compris en milieux naturels.'],['prunus laurocerasus','Laurier-cerise','Préférer le charme, le houx ou l\'if indigène.'],['prunus serotina','Cerisier tardif','Envahit les forêts.'],['robinia','Robinier (faux-acacia)','Enrichit et banalise les sols.'],['senecio inaequidens','Séneçon du Cap','Toxique pour le bétail.'],['impatiens glandulifera','Balsamine de l\'Himalaya','Colonise les berges.'],['heracleum mantegazzianum','Berce du Caucase','Sève phototoxique : brûlures. Ne pas toucher.'],['ailanthus','Ailante (faux vernis du Japon)','Très envahissant.'],['mahonia aquifolium','Mahonia faux-houx','Envahit les lisières.'],['lonicera japonica','Chèvrefeuille du Japon','Étouffe la végétation.'],['cotoneaster','Cotonéasters (plusieurs espèces)','Certaines espèces sont envahissantes.']];
