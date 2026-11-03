@@ -775,8 +775,8 @@ function dl(n,txt,type){const a=document.createElement('a');a.href=URL.createObj
 let CS=null;
 function pTable(p){const L=p.lines&&p.lines.length?p.lines:null;let rows='',q=0,pt=0;
  if(L)L.forEach((l,i)=>{const sp=l.sp&&l.sp.length?l.sp:[{n:l.n,q:l.q}],nm=l.lab||((l.t=='t'?'Massif ':l.t=='b'?'Bac ':'Pot ')+(i+1));q+=l.q||0;pt+=l.t=='t'?0:(l.pots||0);
-  rows+='<tr><td><b>'+esc(nm)+'</b>'+(l.t!='t'&&l.pots>1?' ×'+l.pots:'')+(l.loc?'<br><small>📌 '+esc(l.loc)+'</small>':'')+(l.imgs&&l.imgs.length?' <small>📷'+l.imgs.length+'</small>':'')+'</td><td>'+sp.map(x=>esc(x.n)+' <b>'+(x.q||0)+'</b>').join('<br>')+'</td><td class="n">'+(l.q||0)+'</td></tr>'});
- else{q=p.qty||0;pt=p.pots||0;rows='<tr><td><b>'+esc(p.nom)+'</b>'+(p.pots?' ×'+p.pots:'')+(p.potloc?'<br><small>📌 '+esc(p.potloc)+'</small>':'')+'</td><td>'+esc(p.compo||p.nom)+'</td><td class="n">'+q+'</td></tr>'}
+  rows+='<tr><td><b>'+esc(nm)+'</b>'+(l.t!='t'&&l.pots>1?' ×'+l.pots:'')+'</td><td>'+sp.map(x=>esc(x.n)+' <b>'+(x.q||0)+'</b>').join('<br>')+'</td><td class="n">'+(l.q||0)+'</td></tr>'});
+ else{q=p.qty||0;pt=p.pots||0;rows='<tr><td><b>'+esc(p.nom)+'</b>'+(p.pots?' ×'+p.pots:'')+'</td><td>'+esc(p.compo||p.nom)+'</td><td class="n">'+q+'</td></tr>'}
  const meta=[p.sec?'📍 '+esc(p.sec):'',esc(LL(p.lieu||'')),p.expo?esc(p.expo):'',TEAM?'👤 '+esc(mName(resp(p))):''].filter(Boolean).join(' · ');
  return '<table class="pt"><tr><th>Où</th><th>Fleurs</th><th class="n">Nb</th></tr>'+rows+'<tr class="tt"><td colspan="2">Total'+(pt?' · '+pt+' pot(s)/bac(s)':'')+'</td><td class="n">'+q+'</td></tr></table><div class="mut" style="font-size:13px;margin:6px 0">'+meta+'</div>'}
 function showFiche(id){const p=plants.find(x=>String(x.id)==String(id));if(!p)return;const L=p.lines&&p.lines.length?p.lines:null,m=L?spAgg(L):{},ks=Object.keys(m),T=L?lnTot(L):null;
