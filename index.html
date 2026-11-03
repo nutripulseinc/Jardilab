@@ -217,7 +217,7 @@ let DIAG=false,SNAP=null,TT=null,CLID=null,GAL=[];
 const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const today=()=>Math.floor((Date.now()-new Date().getTimezoneOffset()*6e4)/864e5);
 const dd=d=>new Date(d*864e5),fmt=d=>dd(d).toLocaleDateString(LOC,{weekday:'short',day:'numeric',month:'short',timeZone:'UTC'});
-var TEAM=null,TEAMS=[],TINV=[],TSNAP={},TMINE=false,TPEND=0,TDIRTY=0,TERRM='';
+const cj=v=>JSON.stringify(v,(k,x)=>x&&typeof x=='object'&&!Array.isArray(x)?Object.keys(x).sort().reduce((o,y)=>(o[y]=x[y],o),{}):x);var TEAM=null,TEAMS=[],TINV=[],TSNAP={},TMINE=false,TPEND=0,TDIRTY=0,TERRM='';
 let massifs=[];try{massifs=JSON.parse(localStorage.getItem('vdm')||'[]')}catch(e){}
 let W=null,gdone={};try{gdone=JSON.parse(localStorage.getItem('vdg')||'{}')}catch(e){}
 let plants=[];try{plants=JSON.parse(localStorage.getItem('vd')||'[]')}catch(e){}
@@ -859,7 +859,7 @@ ${asgSel(p)}<label>Remarque</label><input id="enote" maxlength="120" value="${es
   const ls=EL.get(),old=p.sec||'',ns=$('#es').value.trim();ls.forEach(l=>{if((l.sec||'')==old)l.sec=ns});const t=lnTot(ls);p.lines=ls.length?ls:null;if(ls.length){p.qty=Math.max(1,t.q);p.pots=t.pots;p.ppp=0;p.potloc='';p.compo=spStrAgg(ls);p.lieu=lnLieu(ls,p.lieu);p.sol=t.cont==0?'Pleine terre':t.terre==0?'Pot / jardinière':'';p.pos=(ls.find(l=>l.pos)||{}).pos||null;p.kind=(ls.length>=2||ls.some(l=>l.sp.length>=2))?'massif':'plante'}p.sec=ns;
   p.engm=$('#eg').value;
   [['a','ea'],['e','ee'],['t','et'],['d','ed']].forEach(([k,i])=>{const v=Math.max(0,+$('#'+i).value||0);if(v!==(p.iv[k]||0)){p.iv[k]=v;p.nx[k]=v?today()+v:0}});
-  save();render();renderHome();$('#mg').hidden=true;toast('Plante modifiée',1)}}
+  const lv=plants.find(x=>x.id==p.id);if(lv&&lv!==p)Object.assign(lv,p,{hist:lv.hist,done:lv.done});else if(!lv)plants.push(p);save();render();renderHome();$('#mg').hidden=true;toast('Plante modifiée',1)}}
 /* export CSV */
 const dstr=d=>dd(d).toISOString().slice(0,10);
 $('#on').value=(()=>{try{return localStorage.getItem('vdon')||''}catch(e){return ''}})();$('#on').oninput=()=>{try{localStorage.setItem('vdon',$('#on').value)}catch(e){}};
@@ -1027,10 +1027,11 @@ async function loadTeams(){
   else if(want&&TEAMS.find(x=>x.id==want))await enterTeam(want);
  }catch(e){}
  renderTm()}
-async function teamFetch(){if(!TEAM||TPEND||TDIRTY)return;
- const {data,error}=await SB.from('team_items').select('kind,iid,data').eq('team_id',TEAM.id);if(error||!TEAM||TPEND)return;
- const P=[],M=[];TSNAP={};(data||[]).forEach(r=>{(r.kind=='p'?P:M).push(r.data);TSNAP[r.kind+r.iid]=JSON.stringify(r.data)});
- if(JSON.stringify(P)==JSON.stringify(plants)&&JSON.stringify(M)==JSON.stringify(massifs))return;
+const mgOpen=()=>{const m=document.getElementById('mg');return !!(m&&!m.hidden)};
+async function teamFetch(){if(!TEAM||TPEND||TDIRTY||mgOpen())return;
+ const {data,error}=await SB.from('team_items').select('kind,iid,data').eq('team_id',TEAM.id);if(error||!TEAM||TPEND||mgOpen())return;
+ const P=[],M=[];TSNAP={};(data||[]).forEach(r=>{(r.kind=='p'?P:M).push(r.data);TSNAP[r.kind+r.iid]=cj(r.data)});
+ if(cj(P)==cj(plants)&&cj(M)==cj(massifs))return;
  plants=P;massifs=M;refreshAll()}
 async function enterTeam(id){const t=TEAMS.find(x=>x.id==id);if(!t)return;
  TDIRTY=0;TERRM='';TEAM=t;TSNAP={};plants=[];massifs=[];try{localStorage.setItem('vdteam',id)}catch(e){}
@@ -1042,13 +1043,13 @@ function teamSave(){if(!TEAM||!USER)return;clearTimeout(TPEND);TPEND=setTimeout(
  const cur={};plants.forEach(p=>cur['p'+p.id]=['p',String(p.id),p]);massifs.forEach(m=>cur['m'+m.id]=['m',String(m.id),m]);
  try{
   const ups=[],pt=[];
-  for(const k in cur){const [kind,iid,d]=cur[k];if(TSNAP[k]===JSON.stringify(d))continue;
+  for(const k in cur){const [kind,iid,d]=cur[k];if(TSNAP[k]===cj(d))continue;
    if(chef)ups.push({team_id:tid,kind,iid,data:d,updated_at:new Date().toISOString()});
    else if(kind=='p'&&TSNAP[k])pt.push([kind,iid,{nx:d.nx,hist:d.hist,done:d.done}])}
   if(chef){if(ups.length){const {error}=await SB.from('team_items').upsert(ups);if(error)throw error}
    for(const k in TSNAP)if(!cur[k]){const {error}=await SB.from('team_items').delete().eq('team_id',tid).eq('kind',k[0]).eq('iid',k.slice(1));if(error)throw error}}
   for(const [kind,iid,patch] of pt){const {error}=await SB.rpc('team_patch',{t:tid,k:kind,i:iid,patch});if(error)throw error}
-  TPEND=0;TDIRTY=0;if(chef){TSNAP={};for(const k in cur)TSNAP[k]=JSON.stringify(cur[k][2])}else await teamFetch();
+  TPEND=0;TDIRTY=0;if(chef){TSNAP={};for(const k in cur)TSNAP[k]=cj(cur[k][2])}else await teamFetch();
  }catch(e){TPEND=0;TDIRTY=1;TERRM=(e&&(e.message||e.details||e.hint||e.code))||'erreur inconnue';toast('Synchronisation impossible, vos données sont conservées sur cet appareil.');renderTm();clearTimeout(window._trt);window._trt=setTimeout(()=>{if(TDIRTY&&TEAM)teamSave()},20000);return}TDIRTY=0;if(TERRM){TERRM='';renderTm()}},600)}
 setInterval(()=>{if(TEAM&&!document.hidden)teamFetch()},60000);
 document.addEventListener('visibilitychange',()=>{if(TEAM&&!document.hidden)teamFetch()});
