@@ -1,5 +1,6 @@
 {
   "headers": [
+    { "source": "/(|index.html|sw.js|i18n.js|i18n-de.js|i18n-it.js)", "headers": [ { "key": "Cache-Control", "value": "no-cache, must-revalidate" } ] },
     {
       "source": "/(.*)",
       "headers": [
