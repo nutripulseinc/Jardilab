@@ -585,11 +585,11 @@ async function aiRender(){const o=$('#rio'),b=$('#rgo');b.disabled=true;o.textCo
   const prompt=`Photorealistic garden photograph of ${kind} (${W} x ${L} cm) planted ${season}, as a professional landscape photo, natural daylight, shallow depth of field, mulched soil, no people, no text, no labels. Show these plants at mature size with their exact flower colours and shapes, in this arrangement (the attached image is a schematic front view of the planting: respect plant heights, relative sizes and positions):\n${list}\nExposure: ${cfg.ex}.${cfg.vue=='m'?' The bed is against a wall at the back.':' The bed is viewed from all sides.'} Plants that do not flower ${season} should be shown with their foliage only.`;
   const image=await svgJpeg(elevSVG(),768);
   const {data,error}=await SB.functions.invoke('ai-render',{body:{prompt,image}});
-  let er=data&&data.error;if(error&&!er){try{const j=await error.context.json();er=j.error}catch(e){er='ia'}}
-  if(er){o.textContent=er=='quota'?'Limite du jour atteinte pour les aperçus IA. Réessayez demain.':er=='config'?'Aperçu IA pas encore activé (clé manquante).':er=='auth'?'Connectez-vous pour utiliser cette fonction.':'L\'image n\'a pas pu être créée. Réessayez dans un instant.';return}
+  let er=data&&data.error,dt='';if(error&&!er){try{const j=await error.context.json();er=j.error;dt=[j.status,j.detail].filter(Boolean).join(' ')}catch(e){er='ia';dt=(error.name||'')+' '+(error.message||'')+' '+(error.context&&error.context.status||'')}}
+  if(er){o.textContent=er=='quota'?'Limite du jour atteinte pour les aperçus IA. Réessayez demain.':er=='config'?'Aperçu IA pas encore activé (clé manquante).':er=='auth'?'Connectez-vous pour utiliser cette fonction.':'L\'image n\'a pas pu être créée. Réessayez dans un instant. (détail : '+er+' '+dt+')';return}
   const src='data:'+(data.mime||'image/png')+';base64,'+data.image;
   o.innerHTML='<img alt="Aperçu réaliste du massif" src="'+src+'" style="width:100%;border-radius:12px;margin-top:4px"><div class="mut" style="margin-top:6px">Image d\'ambiance créée par IA (touchez pour agrandir). Elle ne reproduit pas exactement chaque plante ni leur place ; le plan reste la référence.</div>'}
- catch(e){o.textContent='L\'image n\'a pas pu être créée. Réessayez dans un instant.'}finally{b.disabled=false}}
+ catch(e){o.textContent='L\'image n\'a pas pu être créée. Réessayez dans un instant. (détail : '+(e&&e.message||e)+')'}finally{b.disabled=false}}
 
 /* météo (Open-Meteo) */
 const wi=c=>c==0?'☀️':c<=2?'🌤️':c==3?'☁️':c<=48?'🌫️':c<=57?'🌦️':c<=67?'🌧️':c<=77?'🌨️':c<=82?'🌦️':c<=86?'🌨️':'⛈️';
