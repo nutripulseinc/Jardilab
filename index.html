@@ -514,14 +514,14 @@ function topPlant(p,x,y,R,f){const fe=hx(p.feuille),fl=hx(p.fleur),flo=MS(p.mois
  s+=`<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(R)}" fill="url(#hl)"/><circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(R)}" fill="url(#sh)"/>`;
  if(flo){const N=wd?7:Math.round(Math.min(14,5+R/f*2)),r=Math.max(R*(wd?.09:.15),f*.17);for(let i=0;i<N;i++){const a=rnd()*6.283,d=Math.sqrt(rnd())*R*.76;s+=flw(x+Math.cos(a)*d,y+Math.sin(a)*d,r,fl,5)}}
  return s}
-function sidePlant(p,x,b,w,h){const fe=hx(p.feuille),fl=hx(p.fleur),flo=MS(p.mois).length>0,wd=woody(p),fm=p.forme,sw=Math.max(1,w/30);
+function sidePlant(p,x,b,w,h,dk){const fe=shade(hx(p.feuille),-(dk||0)),fl=hx(p.fleur),flo=MS(p.mois).length>0,wd=woody(p),fm=p.forme,sw=Math.max(1,w/30);
  let s=`<ellipse cx="${n1(x)}" cy="${n1(b)}" rx="${n1(w*.48)}" ry="${n1(Math.max(2,w*.07))}" fill="#000" opacity=".5" filter="url(#bl2)"/>`;
- if(wd){const trunk=h>=110,tH=trunk?h*.38:0,ry=(h-tH)/2,rx=w/2,cyc=b-tH-ry;
+ if(wd&&(h>=110||(fm!='dresse'&&fm!='graminee'))){const trunk=h>=110,tH=trunk?h*.38:0,ry=(h-tH)/2,rx=w/2,cyc=b-tH-ry;
   if(trunk){const tw=Math.max(2.5,w*.035),tc=shade('#6b4a30',-.1);s+=`<path d="M${n1(x-tw)} ${n1(b)}L${n1(x-tw*.55)} ${n1(b-tH-ry*.35)}L${n1(x+tw*.55)} ${n1(b-tH-ry*.35)}L${n1(x+tw)} ${n1(b)}Z" fill="${tc}"/>`;
    for(let i=0;i<4;i++){const sg=i%2?1:-1;s+=`<path d="M${n1(x)} ${n1(b-tH*.85)}Q${n1(x+sg*rx*.25)} ${n1(b-tH-ry*.1)} ${n1(x+sg*rx*(.3+.2*rnd()))} ${n1(b-tH-ry*(.5+.3*rnd()))}" stroke="${tc}" stroke-width="${n1(tw*.6)}" fill="none" stroke-linecap="round"/>`}}
   const N=Math.round(Math.min(18,9+w/22)),bl=[];for(let i=0;i<N;i++){const a=rnd()*6.283,rr=Math.sqrt(rnd());bl.push([x+Math.cos(a)*rr*rx*.6,cyc+Math.sin(a)*rr*ry*.6])}
-  bl.sort((a,c)=>c[1]-a[1]).forEach(([bx,by])=>{const t=(by-(cyc-ry))/(2*ry);s+=`<ellipse cx="${n1(bx)}" cy="${n1(by)}" rx="${n1(rx*(.36+.14*rnd()))}" ry="${n1(ry*(.38+.14*rnd()))}" fill="${shade(fe,.2-.5*t)}"/>`});
-  for(let i=0;i<Math.round(110*DET);i++){const a=rnd()*6.283,rr=Math.sqrt(rnd())*.95,px=x+Math.cos(a)*rr*rx,py=cyc+Math.sin(a)*rr*ry,t=(py-(cyc-ry))/(2*ry);s+=lfp(px,py,Math.max(2.5,w*.04),rnd()*6.283,jit(shade(fe,.18-.4*t),.22))}
+  bl.sort((a,c)=>c[1]-a[1]).forEach(([bx,by])=>{const t=(by-(cyc-ry))/(2*ry);s+=`<ellipse cx="${n1(bx)}" cy="${n1(by)}" rx="${n1(rx*(.3+.12*rnd()))}" ry="${n1(ry*(.32+.12*rnd()))}" fill="${shade(fe,-.2-.12*t)}"/>`});
+  for(let i=0;i<Math.round(280*DET);i++){const a=rnd()*6.283,rr=Math.sqrt(rnd())*1,px=x+Math.cos(a)*rr*rx*.97,py=cyc+Math.sin(a)*rr*ry*.97,t=(py-(cyc-ry))/(2*ry);s+=lfp(px,py,Math.max(2.8,w*.05),rnd()*6.283,jit(shade(fe,.2-.45*t),.2))}
   
   if(flo)for(let i=0;i<7;i++){const a=rnd()*6.283,rr=Math.sqrt(rnd())*.8;s+=flw(x+Math.cos(a)*rr*rx,cyc+Math.sin(a)*rr*ry,Math.max(2.2,w*.045),fl,5)}
   return s}
@@ -539,7 +539,7 @@ function planSVG0(){DET=Math.min(1,Math.max(.35,60/lay.length));const {W,L,rond}
  let s=`<svg class="plan" viewBox="${-f*1.5} ${-f*2} ${W+f*3} ${L+f*5}"><defs>${GR}<filter id="bl"><feGaussianBlur stdDeviation="${f/5}"/></filter><filter id="so" x="0" y="0" width="100%" height="100%"><feTurbulence baseFrequency=".7" numOctaves="3" seed="4"/><feColorMatrix values="0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .8 0"/></filter><clipPath id="cl">${rond?`<circle cx="${W/2}" cy="${W/2}" r="${W/2}"/>`:`<rect width="${W}" height="${L}"/>`}</clipPath></defs>`;
  s+=rond?`<circle cx="${W/2}" cy="${W/2}" r="${W/2+f/2}" fill="#a65a35" stroke="#5e2f17" stroke-width="${f/8}"/>`:`<rect x="${-f/2}" y="${-f/2}" width="${W+f}" height="${L+f}" rx="${f/4}" fill="#7a5c3c" stroke="#3b2a18" stroke-width="${f/8}"/>`;
  {let ch='';const cc=['#3a2a1c','#4b3623','#2f2216','#5a4029','#443020'],nn=Math.min(260,Math.round(W*L/600));for(let i=0;i<nn;i++){const cx=rnd()*W,cy=rnd()*L,r=f*(.1+.18*rnd());ch+=`<ellipse cx="${n1(cx)}" cy="${n1(cy)}" rx="${n1(r)}" ry="${n1(r*.55)}" transform="rotate(${Math.round(rnd()*180)} ${n1(cx)} ${n1(cy)})" fill="${cc[i%5]}"/>`}s+=`<g clip-path="url(#cl)"><rect width="${W}" height="${L}" fill="#2b1e14"/><rect width="${W}" height="${L}" filter="url(#so)" opacity=".6"/>${ch}</g>`}
- lay.slice().sort((a,b)=>a.p.haut-b.p.haut).forEach(o=>{const p=o.p,R=p.etal*(o.sc||1)/2*.85,x=o.x,y=o.y;s+=topPlant(p,x,y,R,f);
+ lay.slice().sort((a,b)=>a.p.haut-b.p.haut).forEach(o=>{let p=o.p,R=p.etal*(o.sc||1)/2*.85,x=o.x,y=o.y,lim=(rond?W/2-Math.hypot(x-W/2,y-W/2):Math.min(x,W-x,y,L-y))+f*.6;R=Math.max(f*.8,Math.min(R,lim));s+=topPlant(p,x,y,R,f);
    s+=`<circle cx="${x}" cy="${y}" r="${f*.4}" fill="#000" fill-opacity=".65" stroke="#fff" stroke-opacity=".5" stroke-width="${f/30}"/><text x="${x}" y="${y+f*.17}" text-anchor="middle" font-size="${f*.5}" font-weight="700" fill="#fff">${p.n}</text>`});
   const len=W>=150?100:W>=60?50:10,y=L+f*1.9;s+=`<path d="M0 ${y}H${len}M0 ${y-f/4}V${y+f/4}M${len} ${y-f/4}V${y+f/4}" stroke="#86efac" stroke-width="${f/12}"/><text x="${len/2}" y="${y+f*.8}" text-anchor="middle" font-size="${f*.6}" fill="#86efac">${len} cm</text><text x="0" y="${-f}" font-size="${f*.7}" fill="#86efac">${rond?'Ø '+W:W+' × '+L} cm · vue de dessus${cfg.vue=='m'&&!rond?' (mur en haut)':''}</text></svg>`;return s}
 function elevSVG(){const sv=S;S=(S0|0)*17+3;try{return elevSVG0()}finally{S=sv}}
@@ -547,7 +547,7 @@ function elevSVG0(){DET=Math.min(1,Math.max(.35,60/lay.length));const {W,L,rond,
  let s=`<svg class="plan" viewBox="-25 0 ${W+50} ${hh}"><defs>${GR}<filter id="bl2"><feGaussianBlur stdDeviation="${Math.max(2,W/90)}"/></filter><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${vue=='m'?'#1c2620':'#0d1a2a'}"/><stop offset="1" stop-color="${vue=='m'?'#111812':'#1d3322'}"/></linearGradient><linearGradient id="pt" x1="0" x2="1"><stop offset="0" stop-color="#7d3d1f"/><stop offset=".4" stop-color="#b86a40"/><stop offset="1" stop-color="#6b3219"/></linearGradient></defs><rect x="-25" width="${W+50}" height="${hh}" fill="url(#bg)"/>`;
  if(vue=='m')for(let y=20;y<gy;y+=26)s+=`<path d="M-25 ${y}H${W+25}" stroke="#fff" stroke-opacity=".05"/>`;
  const E=ty=='pot'?`<path d="M${W*.02} ${gy-6}H${W*.98}V${gy+4}H${W*.02}Z M${W*.08} ${gy+4}H${W*.92}L${W*.82} ${gy+ph}H${W*.18}Z" fill="url(#pt)"/>`:ty=='bac'?`<rect x="0" y="${gy-4}" width="${W}" height="${ph+4}" fill="#7a5c3c" stroke="#3b2a18"/>`:`<rect x="-25" y="${gy}" width="${W+50}" height="${ph}" fill="#2b1e14"/><path d="M-25 ${gy}H${W+25}" stroke="#4b3825" stroke-width="3"/>`;
- let pl='';lay.slice().sort((a,b)=>a.y-b.y).forEach(o=>{const p=o.p,x=o.x,b=gy-(L-o.y)/L*dp;pl+=sidePlant(p,x,b,p.etal*(o.sc||1),p.haut)});
+ let pl='';lay.slice().sort((a,b)=>a.y-b.y).forEach(o=>{const p=o.p,x=o.x,b=gy-(L-o.y)/L*dp;pl+=sidePlant(p,x,b,p.etal*(o.sc||1),p.haut,Math.max(0,.2*(1-o.y/L)))});
  return s+pl+E+`<text x="-20" y="14" font-size="${Math.max(7,W/28)}" fill="#86efac">Vue de face · hauteurs à maturité</text></svg>`}
 function show(){const P=pal.P,A=cfg.rond?Math.PI*cfg.W*cfg.W/4:cfg.W*cfg.L,n=lay.length,dep=cfg.ty=='pot'?35:cfg.ty=='bac'?25:30;
  $('#gr').innerHTML=`<div class="card"><h2>${esc(pal.titre)}</h2><p>${esc(pal.description)}</p>
