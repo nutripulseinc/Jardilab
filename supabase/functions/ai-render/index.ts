@@ -37,6 +37,17 @@ Deno.serve(async (req) => {
     if (qe) return json({ error: "quota-check" }, 500);
     if (q !== "ok") return json({ error: "quota", scope: q }, 429);
 
+    // Un essai raté ne compte pas dans la limite du jour
+    const refund = async () => {
+      try {
+        const d = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Zurich" });
+        for (const uid of ["*", user.id]) {
+          const { data: row } = await admin.from("ai_usage").select("n").eq("day", d).eq("uid", uid).eq("kind", "g").maybeSingle();
+          if (row && row.n > 0) await admin.from("ai_usage").update({ n: row.n - 1 }).eq("day", d).eq("uid", uid).eq("kind", "g");
+        }
+      } catch (_) { /* sans importance */ }
+    };
+
     const parts: unknown[] = [{ text: prompt }];
     if (image) parts.push({ inlineData: { mimeType: "image/jpeg", data: image } });
 
@@ -47,12 +58,20 @@ Deno.serve(async (req) => {
       body: JSON.stringify({ contents: [{ parts }], generationConfig: { responseModalities: ["IMAGE", "TEXT"] } }),
     });
     const j = await r.json();
-    if (!r.ok) return json({ error: "ia", status: r.status, detail: String(j?.error?.message ?? "").slice(0, 200) }, 502);
+    if (!r.ok) {
+      console.error("gemini", r.status, JSON.stringify(j).slice(0, 500));
+      await refund();
+      return json({ error: "ia", status: r.status, detail: String(j?.error?.message ?? "").slice(0, 200) }, 502);
+    }
     const ps = (j.candidates?.[0]?.content?.parts ?? []) as { inlineData?: { data: string; mimeType?: string }; inline_data?: { data: string; mime_type?: string } }[];
     const p = ps.find((x) => x.inlineData || x.inline_data);
     const d = p?.inlineData ?? p?.inline_data;
-    if (!d) return json({ error: "noimage" }, 502);
-    return json({ image: d.data, mime: (p?.inlineData?.mimeType ?? p?.inline_data?.mime_type) || "image/png" });
+    if (!d) {
+      console.error("gemini noimage", JSON.stringify(j).slice(0, 500));
+      await refund();
+      return json({ error: "noimage", detail: String(j?.promptFeedback?.blockReason ?? j?.candidates?.[0]?.finishReason ?? "") }, 502);
+    }
+    return json({ image: d.data, mime: p?.inlineData?.mimeType ?? p?.inline_data?.mime_type ?? "image/png" });
   } catch (e) {
     return json({ error: String(e) }, 500);
   }
