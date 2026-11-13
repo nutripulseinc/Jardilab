@@ -865,7 +865,7 @@
 "Étape 3 : le contenu. Une ligne par espèce, avec sa quantité, pleine terre ou pots, le nombre de pots, le secteur, l'emplacement précis, la position sur la carte et une photo. Une seule plante : indiquez juste la quantité. Deux lignes ou plus : c'est un massif, entretenu comme un seul ensemble.": "Schritt 3: der Inhalt. Eine Zeile pro Art mit Menge, Freiland oder Töpfen, Anzahl Töpfe, Bereich, genauem Standort, Kartenposition und Foto. Eine einzelne Pflanze: nur die Menge angeben. Zwei oder mehr Zeilen: ein Beet, als Ganzes gepflegt.",
 "Retirer": "Entfernen",
 "Réessayer maintenant": "Jetzt erneut versuchen",
-"Synchronisation impossible, vos données sont conservées sur cet appareil.": "Synchronisierung nicht möglich, Ihre Daten bleiben auf diesem Gerät erhalten.",
+"Synchronisation impossible : nouvel essai dans 20 s. Gardez l'application ouverte.": "Synchronisierung nicht möglich: neuer Versuch in 20 s. Lassen Sie die App geöffnet.",
 "Prendre une photo": "Foto aufnehmen",
 "Photos de cette ligne (facultatif)": "Fotos dieser Zeile (optional)",
 "12 photos maximum par ligne": "Maximal 12 Fotos pro Zeile",

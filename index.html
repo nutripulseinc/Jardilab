@@ -888,7 +888,7 @@ function fichePdf(id){const p=plants.find(x=>x.id==id);if(!p)return;const m=p.ki
  +'<p style="font-size:11px;color:#666">Jardilab · www.jardilab.ch · Conseils basés sur l\'IA, non contraignants.</p>';
  const t0=document.title;document.title='Fiche - '+p.nom;const back=()=>{document.title=t0;window.removeEventListener('afterprint',back)};window.addEventListener('afterprint',back);
  setTimeout(()=>window.print(),150)}
-function cloudSave(){if(!USER||TEAM)return;clearTimeout(CS);CS=setTimeout(async()=>{try{await SB.from('user_data').upsert({user_id:USER.id,plants,massifs,updated_at:new Date().toISOString()})}catch(e){}},800)}
+function cloudSave(){if(!USER||TEAM)return;try{localStorage.setItem('vdcd','1')}catch(e){}clearTimeout(CS);CS=setTimeout(async()=>{if(TEAM)return;try{const {error}=await SB.from('user_data').upsert({user_id:USER.id,plants,massifs,updated_at:new Date().toISOString()});if(!error)try{localStorage.removeItem('vdcd')}catch(e){}}catch(e){}},800)}
 /* réglages synchronisés entre appareils (commune, préférences d'entretien, langue) */
 const SK=['vdw','vdcfg','vdpro','vdcu','vdl','vdar'];let STm=null;
 const getSet=()=>{const o={};SK.forEach(k=>{try{const v=localStorage.getItem(k);if(v!=null)o[k]=v}catch(e){}});return o};
@@ -898,7 +898,8 @@ async function setLoad(){if(!USER)return;try{const {data,error}=await SB.from('u
  SK.forEach(k=>{if(typeof c[k]!='string')return;let cur=null;try{cur=localStorage.getItem(k)}catch(e){}if(cur===c[k])return;if(k=='vdl'){if(cur!==null)return;ll=true}try{Storage.prototype.setItem.call(localStorage,k,c[k])}catch(e){}if(k=='vdw')lw=true});
  if(ll&&c.vdl&&c.vdl!=LANG){setLang(c.vdl);return}if(lw)try{loadW(true)}catch(e){}}catch(e){}}
 async function cloudLoad(){if(!USER||TEAM)return;try{const {data}=await SB.from('user_data').select('plants,massifs').eq('user_id',USER.id).maybeSingle();
- const mrg=(c,l)=>{const m=new Map();(l||[]).forEach(x=>m.set(x.id,x));(c||[]).forEach(x=>m.set(x.id,x));return [...m.values()]};
+ if(TEAM)return;let dirty=false;try{dirty=!!localStorage.getItem('vdcd')}catch(e){}
+ const mrg=(c,l)=>{const m=new Map();(l||[]).forEach(x=>m.set(x.id,x));(c||[]).forEach(x=>{if(!(dirty&&m.has(x.id)))m.set(x.id,x)});return [...m.values()]};
  plants=mrg(data&&data.plants,plants);massifs=mrg(data&&data.massifs,massifs);save();saveM();render();renderM();renderHome()}catch(e){}setLoad()}
 /* modifier une plante */
 function jRender(p){const ph=p.photos||[];$('#jph').innerHTML=ph.length?'<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:6px">'+ph.map((x,i)=>'<figure style="margin:0;text-align:center;flex:none"><img class="th" style="width:84px;height:84px" alt="" src="'+x.img+'"><figcaption class="mut" style="font-size:11px">'+fmt(x.d)+' <button type="button" data-jx="'+i+'" aria-label="Supprimer cette photo" style="background:none;color:var(--bad);padding:0 6px;min-height:28px">✕</button></figcaption></figure>').join('')+'</div>':'<p class="mut">Aucune photo. Ajoutez-en régulièrement pour suivre l\'évolution (avant / après).</p>';
@@ -1199,7 +1200,7 @@ async function enterTeam(id){const t=TEAMS.find(x=>x.id==id);if(!t)return;
  document.body.classList.toggle('tm',t.role!='chef');await teamFetch();refreshAll();renderTm()}
 function exitTeam(){TDIRTY=0;TERRM='';TEAM=null;TSNAP={};TMINE=false;clearTimeout(TPEND);TPEND=0;try{localStorage.removeItem('vdteam')}catch(e){}
  document.body.classList.remove('tm');plants=MYP();massifs=MYM();refreshAll();renderTm()}
-function teamSave(){if(!TEAM||!USER)return;clearTimeout(TPEND);TPEND=setTimeout(async()=>{
+function teamSave(dl){if(!TEAM||!USER)return;clearTimeout(TPEND);TPEND=setTimeout(async()=>{
  const tid=TEAM&&TEAM.id,chef=isChef();if(!tid){TPEND=0;return}
  const cur={};plants.forEach(p=>cur['p'+p.id]=['p',String(p.id),p]);massifs.forEach(m=>cur['m'+m.id]=['m',String(m.id),m]);
  try{
@@ -1211,7 +1212,9 @@ function teamSave(){if(!TEAM||!USER)return;clearTimeout(TPEND);TPEND=setTimeout(
    for(const k in TSNAP)if(!cur[k]){const {error}=await SB.from('team_items').delete().eq('team_id',tid).eq('kind',k[0]).eq('iid',k.slice(1));if(error)throw error}}
   for(const [kind,iid,patch] of pt){const {error}=await SB.rpc('team_patch',{t:tid,k:kind,i:iid,patch});if(error)throw error}
   TPEND=0;TDIRTY=0;if(chef){TSNAP={};for(const k in cur)TSNAP[k]=cj(cur[k][2])}else await teamFetch();
- }catch(e){TPEND=0;TDIRTY=1;TERRM=(e&&(e.message||e.details||e.hint||e.code))||'erreur inconnue';toast('Synchronisation impossible, vos données sont conservées sur cet appareil.');renderTm();clearTimeout(window._trt);window._trt=setTimeout(()=>{if(TDIRTY&&TEAM)teamSave()},20000);return}TDIRTY=0;if(TERRM){TERRM='';renderTm()}},600)}
+ }catch(e){TPEND=0;TDIRTY=1;TERRM=(e&&(e.message||e.details||e.hint||e.code))||'erreur inconnue';toast('Synchronisation impossible : nouvel essai dans 20 s. Gardez l\'application ouverte.');renderTm();clearTimeout(window._trt);window._trt=setTimeout(()=>{if(TDIRTY&&TEAM)teamSave()},20000);return}TDIRTY=0;if(TERRM){TERRM='';renderTm()}},dl==null?600:dl)}
+function teamFlush(){if(TEAM&&USER&&(TPEND||TDIRTY))teamSave(0)}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)teamFlush()});window.addEventListener('pagehide',teamFlush);
 setInterval(()=>{if(TEAM&&!document.hidden)teamFetch()},60000);
 document.addEventListener('visibilitychange',()=>{if(TEAM&&!document.hidden)teamFetch()});
 function renderTm(){const el=$('#tm');if(!el)return;

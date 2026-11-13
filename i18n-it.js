@@ -865,7 +865,7 @@
 "Étape 3 : le contenu. Une ligne par espèce, avec sa quantité, pleine terre ou pots, le nombre de pots, le secteur, l'emplacement précis, la position sur la carte et une photo. Une seule plante : indiquez juste la quantité. Deux lignes ou plus : c'est un massif, entretenu comme un seul ensemble.": "Passaggio 3: il contenuto. Una riga per specie, con quantità, piena terra o vasi, numero di vasi, settore, posizione precisa, posizione sulla mappa e foto. Una sola pianta: indica solo la quantità. Due o più righe: è un'aiuola, curata come un unico insieme.",
 "Retirer": "Rimuovi",
 "Réessayer maintenant": "Riprova ora",
-"Synchronisation impossible, vos données sont conservées sur cet appareil.": "Sincronizzazione impossibile, i dati restano su questo dispositivo.",
+"Synchronisation impossible : nouvel essai dans 20 s. Gardez l'application ouverte.": "Sincronizzazione impossibile: nuovo tentativo tra 20 s. Tieni l'app aperta.",
 "Prendre une photo": "Scatta una foto",
 "Photos de cette ligne (facultatif)": "Foto di questa riga (facoltativo)",
 "12 photos maximum par ligne": "Massimo 12 foto per riga",
