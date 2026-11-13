@@ -269,11 +269,11 @@ function lgHtml(L){const A=x=>Array.isArray(x)?x:[],ap=A(L.appellations).filter(
  if(ua.length)o+='<h4>Usages d\'autrefois</h4><ul class="usg">'+ua.slice(0,4).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';
  if(!o)return '<div class="mut">Aucune légende ou tradition bien attestée pour cette plante.</div>';
  return o+'<div class="warn">Traditions et folklore : récits populaires, pas des faits scientifiques ni des conseils de santé. Les récits peuvent varier selon les régions et les époques.</div>'}
-function lgInit(r){const d=$('#lgd');if(!d)return;let busy=0;const go=async()=>{if(!d.open||busy)return;if(r._lg){$('#lgb').innerHTML=lgHtml(r._lg);return}
-  busy=1;$('#lgb').textContent='Recherche dans le savoir des anciens…';
-  try{const L=await ask('Plante : "'+(r.nom||'')+'" ('+(r.latin||'')+'). Donne le savoir populaire et les légendes des anciens autour de cette plante : appellations d\'autrefois, légendes, croyances et usages d\'autrefois, uniquement ce qui est réellement attesté dans le folklore, l\'histoire ou la mythologie. N\'invente rien : si rien n\'est attesté, laisse les tableaux vides. Ne présente jamais un usage comme un traitement médical. JSON: {"appellations":[{"nom":"","origine":"région ou époque"}],"legendes":[{"titre":"","recit":"3 phrases maximum","origine":"culture ou époque"}],"croyances":["..."],"usages_anciens":["..."]} Maximum 4 appellations, 3 légendes, 4 croyances, 4 usages.'+J);
-   r._lg=L;$('#lgb').innerHTML=lgHtml(L)}
-  catch(x){$('#lgb').textContent=(x&&x.message)||'Indisponible pour le moment, réessayez.'}busy=0};d.addEventListener('toggle',go)}
+const lgAsk=r=>ask('Plante : "'+(r.nom||'')+'" ('+(r.latin||'')+'). Donne le savoir populaire et les légendes des anciens autour de cette plante : appellations d\'autrefois, légendes, croyances et usages d\'autrefois, uniquement ce qui est réellement attesté dans le folklore, l\'histoire ou la mythologie. N\'invente rien : si rien n\'est attesté, laisse les tableaux vides. Ne présente jamais un usage comme un traitement médical. JSON: {"appellations":[{"nom":"","origine":"région ou époque"}],"legendes":[{"titre":"","recit":"3 phrases maximum","origine":"culture ou époque"}],"croyances":["..."],"usages_anciens":["..."]} Maximum 4 appellations, 3 légendes, 4 croyances, 4 usages.'+J);
+function lgInit(r,ds,bs){ds=ds||'#lgd';bs=bs||'#lgb';const d=$(ds);if(!d)return;let busy=0;const go=async()=>{if(!d.open||busy)return;if(r._lg){$(bs).innerHTML=lgHtml(r._lg);return}
+  busy=1;$(bs).textContent='Recherche dans le savoir des anciens…';
+  try{const L=await lgAsk(r);r._lg=L;$(bs).innerHTML=lgHtml(L)}
+  catch(x){$(bs).textContent=(x&&x.message)||'Indisponible pour le moment, réessayez.'}busy=0};d.addEventListener('toggle',go)}
 function showId(r){const e=r.entretien||{},t=r.toxicite||{};window._r=r;
  $('#idr').innerHTML=`<div class="card"><img class="photo" src="${window._u||''}" alt=""><h2>${esc(r.nom)}</h2><div class="mut"><i>${esc(r.latin)}</i> · ${esc(r.famille)} · confiance ${esc(r.confiance)}</div><p>${esc(r.description)}</p>${invB(r.latin,r.nom)}
  <span class="tag ${t.toxique?'tox':'ok'}">${t.toxique?'⚠ Toxique':'✓ Non toxique'}</span>${badges(r.indicateurs||{})}
@@ -402,9 +402,9 @@ function renderAcc(){const a=$('#acc');$('#lb').innerHTML=ICO('user')+' '+(PROF?
   else{const {error}=await SB.auth.signInWithPassword({email:e,password:w,options:tsOpt()});tsReset();if(error)return err(/confirm/i.test(error.message)?"Confirmez d'abord votre e-mail (lien reçu par mail).":'E-mail ou mot de passe incorrect.');MSG='';$('#md').hidden=true}};
  const fp=$('#fp');if(fp)fp.onclick=async ev=>{ev.preventDefault();const e=$('#ae').value.trim();if(!e)return err('Saisissez votre e-mail ci-dessus.');if(TSK&&!TOK)return err('Validez la vérification de sécurité ci-dessus.');await SB.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname,...tsOpt()});tsReset();MSG='Si ce compte existe, un e-mail de réinitialisation a été envoyé.';renderAcc()}}
 function pub(r){return async()=>{const m=$('#pbm');if(!USER||!PROF){m.textContent="Connectez-vous d'abord (bouton « Connexion » en haut à droite).";openM();return}
- m.textContent='Publication…';try{let pos=PICK;
+ m.textContent='Publication…';try{let pos=PICK;if(!r._lg){try{r._lg=await lgAsk(r)}catch(x){}}
   const blob=await (await fetch(window._t)).blob(),path=USER.id+'/'+Date.now()+'.jpg',u=await SB.storage.from('discoveries').upload(path,blob,{contentType:'image/jpeg'});if(u.error)throw u.error;
-  const {error}=await SB.from('discoveries').insert({user_id:USER.id,nom:String(r.nom||'').slice(0,80),latin:String(r.latin||'').slice(0,80),description:String(r.description||'').slice(0,400),toxique:!!(r.toxicite&&r.toxicite.toxique),bienfaits:(r.bienfaits||[]).slice(0,3).map(x=>String(x).slice(0,40)),lieu:$('#lp').value.trim().slice(0,80)||null,details:{description:String(r.description||'').slice(0,1500),famille:String(r.famille||'').slice(0,60),confiance:String(r.confiance||'').slice(0,20),entretien:r.entretien||{},bienfaits:(r.bienfaits||[]).slice(0,8),proprietes:(r.proprietes||[]).slice(0,8),toxicite:r.toxicite||{},indicateurs:r.indicateurs||{}},lat:pos?pos[0]:null,lon:pos?pos[1]:null,image_path:path});
+  const {error}=await SB.from('discoveries').insert({user_id:USER.id,nom:String(r.nom||'').slice(0,80),latin:String(r.latin||'').slice(0,80),description:String(r.description||'').slice(0,400),toxique:!!(r.toxicite&&r.toxicite.toxique),bienfaits:(r.bienfaits||[]).slice(0,3).map(x=>String(x).slice(0,40)),lieu:$('#lp').value.trim().slice(0,80)||null,details:{description:String(r.description||'').slice(0,1500),famille:String(r.famille||'').slice(0,60),confiance:String(r.confiance||'').slice(0,20),entretien:r.entretien||{},bienfaits:(r.bienfaits||[]).slice(0,8),proprietes:(r.proprietes||[]).slice(0,8),usages:(r.usages||[]).slice(0,5),nutrition:r.nutrition||{},precautions:(r.precautions||[]).slice(0,5),legendes:r._lg||null,toxicite:r.toxicite||{},indicateurs:r.indicateurs||{}},lat:pos?pos[0]:null,lon:pos?pos[1]:null,image_path:path});
   if(error){await SB.storage.from('discoveries').remove([path]);throw error}
   m.textContent='✓ Publiée !'+(pos?' Elle apparaît sur la carte (point vert, ou rouge si la plante est envahissante).':'');PICK=null;RAW=null;if(PKM&&MAP){MAP.removeLayer(PKM);PKM=null}if($('#pk'))$('#pk').textContent='Aucune position (facultatif)';$('#pb').disabled=true;loadGal()}catch(x){m.textContent=/Patientez/.test((x&&x.message)||'')?'Patientez une minute entre deux publications.':'Échec de la publication.'}}}
 /* diaporama de la bibliothèque : 2 cartes visibles, défilement automatique toutes les 3 s (récentes -> anciennes) */
@@ -815,10 +815,11 @@ async function showDisc(id,tr){let d=GAL.find(x=>x.id==id);
  <div class="mut"><i>${esc(d.latin)}</i>${dt.famille?' · '+esc(dt.famille):''}${dt.confiance?' · confiance '+esc(dt.confiance):''}</div>
  <div style="margin:8px 0">${d.toxique?'<span class="tag tox">⚠ Toxique</span>':'<span class="tag ok">✓ Non signalée toxique</span>'}${badges(dt.indicateurs||{})}</div>${invB(d.latin,d.nom)}
  <p>${esc(dsc)}</p>
- ${tx.details?'<h3>Toxicité</h3><div>'+esc(tx.details)+'</div>':''}
+ ${(dt.usages||dt.nutrition||dt.precautions)?'<h3>🌿 Bienfaits et usages</h3>'+usagesH({bienfaits:bf,proprietes:dt.proprietes,usages:dt.usages,nutrition:dt.nutrition,precautions:dt.precautions}):''}
+ ${dt.legendes?'<details id="dlgd" class="lgd"><summary>📜 Légendes et savoir des anciens</summary><div id="dlgb" class="mut">Chargement…</div></details>':''}
+ ${tx.details?'<h3>Toxicité</h3><div>'+esc(tx.details)+'</div>'+tdet(tx):''}
  ${rows.length?'<h3>Entretien</h3>'+rows.map(a=>'<div><span class="mut">'+a[0]+'</span> '+esc(a[1])+'</div>').join(''):''}
- ${bf.length?'<h3>Bienfaits</h3>'+bf.map(b=>'<span class="tag ok">'+esc(b)+'</span>').join(''):''}
- ${(dt.proprietes||[]).length?'<h3>Propriétés</h3>'+dt.proprietes.map(b=>'<span class="tag">'+esc(b)+'</span>').join(''):''}
+ ${(dt.usages||dt.nutrition||dt.precautions)?'':(bf.length?'<h3>Bienfaits</h3>'+bf.map(b=>'<span class="tag ok">'+esc(b)+'</span>').join(''):'')+((dt.proprietes||[]).length?'<h3>Propriétés</h3>'+dt.proprietes.map(b=>'<span class="tag">'+esc(b)+'</span>').join(''):'')}
  ${d.details?'':'<p class="mut" style="margin-top:10px">Fiche publiée avant l\'ajout des détails : seuls les éléments de base sont disponibles.</p>'}
  <h3>Où et qui</h3><div class="mut">${d.lieu?ICO('pin')+' '+esc(d.lieu)+'<br>':''}par @${esc((d.profiles&&d.profiles.pseudo)||'jardinier')} · ${new Date(d.created_at).toLocaleDateString(LOC)}</div>
  <div class="row" style="margin-top:12px">${d.lat!=null?'<button class="ghost" id="dmap" type="button">📍 Voir sur la carte</button>':''}${own?'<button class="ghost" id="dpos" type="button">✏️ '+(d.lat!=null?'Modifier la position':'Placer sur la carte')+'</button>':''}</div>
@@ -827,6 +828,7 @@ async function showDisc(id,tr){let d=GAL.find(x=>x.id==id);
   const r=await ask("Traduis en "+LN+" toutes les valeurs textuelles de cet objet JSON (fiche d'une plante), sans changer les clés ni la structure, sans ajouter de commentaire : "+JSON.stringify(o)+J);
   if(!r||typeof r!='object')return;try{localStorage.setItem(tk,JSON.stringify(r))}catch(x){}
   if($('#dpic')&&!$('#mg').hidden)showDisc(id,r)}catch(x){}})()}
+ if(dt.legendes)lgInit({_lg:dt.legendes},'#dlgd','#dlgb');
  $('#dpic').onclick=()=>{const z=document.createElement('div');z.id='zm';z.innerHTML='<img alt="" src="'+esc(img)+'">';z.onclick=()=>z.remove();document.body.appendChild(z)};
  const m=$('#dmap');if(m)m.onclick=()=>{$('#mg').hidden=true;openBox('#mapbox');ensureMap();MAP.setView([+d.lat,+d.lon],16);$('#map').scrollIntoView({block:'center'})};
  const p=$('#dpos');if(p)p.onclick=()=>startEdit(d)}
